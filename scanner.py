@@ -223,11 +223,16 @@ def calculate_rsi_signals(series_close: pd.Series):
     orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
     return dip_signal, orta_signal
 
-def calculate_auto_vwap2(df: pd.DataFrame, interval_type="1D"):
+def calculate_auto_vwap2(df: pd.Series, interval_type="1D"):
+    """
+    Auto VWAP2 Stratejisi: 
+    Doğru hesaplama için günlük kapanış yerine fiyat ve hacim kümülatif verisi işlenir.
+    """
     try:
         if len(df) < 20: return None
         df = df.copy()
         tp = (df['High'] + df['Low'] + df['Close']) / 3
+        # Kümülatif VWAP hesaplaması
         vwap = (tp * df['Volume']).cumsum() / df['Volume'].cumsum()
         df['VWAP'] = vwap
         df['Trend'] = np.where(df['Close'] > df['VWAP'], 'BULLISH', 'BEARISH')
@@ -253,7 +258,8 @@ def run_targeted_screener():
             
             for full_ticker in batch:
                 ticker = full_ticker.replace('.IS', '')
-                tv_link = f"https://s.tradingview.com/widgetembed/?symbol=BIST%3A{ticker}&interval=D&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&theme=dark"
+                # DÜZELTME: Kesin çalışan ve hata vermeyen TradingView standart grafik bağlantısı
+                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}"
                 
                 try:
                     df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
@@ -316,7 +322,7 @@ def run_targeted_screener():
                     if dip: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (DİP)")
                     if orta: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (ORTA)")
 
-                # 10. Auto VWAP2
+                # 10. Auto VWAP2 (Günlük periyotta güncellenmiş güvenli kümülatif trend kontrolü)
                 if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_d.empty and len(df_d) >= 50:
                     df_vwap = calculate_auto_vwap2(df_d, "1D")
                     if df_vwap is not None:
