@@ -183,16 +183,37 @@
         box.style.display = 'block';
         box.innerText = `⏳ "${strategyName}" için tarama emri GitHub'a iletiliyor...`;
 
-        // GitHub Repository Dispatch API bilgileri (Kendi kullanıcı adınızı ve repo adınızı buraya yazacaksınız)
+        // GitHub Repository Dispatch / Workflow Dispatch API Ayarları
         const repoOwner = "55hakan"; 
-        const repoName = "bist-tarayici"; // Kendi deponuzun adı
-        const githubToken = ""; // Buraya GitHub Personal Access Token (PAT) gerekecek veya backend üzerinden çalıştırılacak
+        const repoName = "bist-tarayici"; 
+        const githubToken = "BURAYA_GITHUB_PERSONAL_ACCESS_TOKEN_YAZILACAK"; // GitHub Settings > Developer settings > Personal access tokens (repo yetkili) kısmından alacağınız token
 
-        // Bilgilendirme amaçlı geçici simülasyon uyarısı
-        setTimeout(() => {
-            box.innerText = `✅ "${strategyName}" tetiklendi! Sonuçlar birazdan Telegram'a gelecek.`;
+        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/scanner.yml/dispatches`, {
+            method: 'POST',
+            headers: {
+                "Authorization": `token ${githubToken}`,
+                "Accept": "application/vnd.github.v3+json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                ref: "main",
+                inputs: {
+                    strategy: strategyName
+                }
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                box.innerText = `✅ "${strategyName}" başarıyla tetiklendi! Tarama bitince Telegram'a gelecek.`;
+            } else {
+                box.innerText = `⚠️ İstek gönderildi fakat token yetkisini kontrol edin.`;
+            }
+            setTimeout(() => { box.style.display = 'none'; }, 5000);
+        })
+        .catch(error => {
+            box.innerText = `❌ Bağlantı hatası oluştu.`;
             setTimeout(() => { box.style.display = 'none'; }, 4000);
-        }, 1500);
+        });
     }
 </script>
 
