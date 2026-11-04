@@ -106,45 +106,10 @@
 </div>
 
 <script>
-    // GitHub tokenınızı buraya bir kere yazıyorsunuz. (Sadece kendi cihazınızda çalışacağı için gizli kalır)
-    const GITHUB_TOKEN = "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"; 
-    const REPO_OWNER = "55hakan";
-    const REPO_NAME = "bist-9lubot";
-
     function runScan(strategyName) {
-        if(GITHUB_TOKEN === "BURAYA_GITHUB_TOKEN_YAZILACAK") {
-            alert("Lütfen index.html içindeki GITHUB_TOKEN alanına kendi tokeninizi yazın.");
-            return;
-        }
-
-        const box = document.getElementById('status-box');
-        box.style.display = 'block';
-        box.innerText = `⏳ "${strategyName}" tetikleniyor...`;
-
-        fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
-            method: 'POST',
-            headers: {
-                "Authorization": `token ${GITHUB_TOKEN}`,
-                "Accept": "application/vnd.github.v3+json",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                event_type: "run-strategy",
-                client_payload: { strategy: strategyName }
-            })
-        })
-        .then(response => {
-            if (response.ok) {
-                box.innerText = `✅ "${strategyName}" başarıyla başlatıldı! Arka planda taranıyor, sonuçlar Telegram'a gelecek.`;
-            } else {
-                box.innerText = `⚠️ İstek iletildi fakat GitHub yanıtı hatalı (Token yetkisini kontrol edin).`;
-            }
-            setTimeout(() => { box.style.display = 'none'; }, 5000);
-        })
-        .catch(error => {
-            box.innerText = `❌ Bağlantı hatası oluştu.`;
-            setTimeout(() => { box.style.display = 'none'; }, 4000);
-        });
+        // Doğrudan GitHub Actions tetikleme sayfasına yönlendirir
+        const workflowUrl = "https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml";
+        window.open(workflowUrl, '_blank');
     }
 </script>
 
