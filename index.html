@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hakan Master Tarama Kontrol Paneli</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-color: #c9d1d9;
+            --accent-color: #238636;
+            --accent-hover: #2ea043;
+            --border-color: #30363d;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #8b949e;
+            margin-bottom: 25px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .info h3 {
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            color: #58a6ff;
+        }
+        .info p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+        #status-box {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #1f6feb22;
+            border: 1px solid #1f6feb;
+            color: #58a6ff;
+            text-align: center;
+            display: none;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎯 Master Sinyal Paneli</h1>
+    <div class="subtitle">BIST & Kripto Akıllı Tarama Sistemi</div>
+
+    <div id="status-box">İstek gönderildi, tarama başlatılıyor...</div>
+
+    <div class="card">
+        <div class="info">
+            <h3>1. Uzun Vadeli Ralli</h3>
+            <p>Günlük Matrix Ralli Taraması</p>
+        </div>
+        <button onclick="triggerScan('Uzun Vade Ralli')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>2. RSI-MOST Base 30</h3>
+            <p>Günlük Kesişim Taraması</p>
+        </div>
+        <button onclick="triggerScan('Base 30 Kesisişi')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>3. Matrix Orta Hat (50)</h3>
+            <p>Haftalık Orta Hat Taraması</p>
+        </div>
+        <button onclick="triggerScan('Matrix Orta Hat')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>4. Üçlü Confluence</h3>
+            <p>Leda + Mavilim + WMA79</p>
+        </div>
+        <button onclick="triggerScan('Uclu Kesisim')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>5. LEDA Günlük + MACD</h3>
+            <p>Günlük Trend ve Momentum</p>
+        </div>
+        <button onclick="triggerScan('Leda Gunluk')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>6. LEDA Haftalık + MACD</h3>
+            <p>Haftalık Güçlü Trend</p>
+        </div>
+        <button onclick="triggerScan('Leda Haftalik')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>7. HU Günlük + MACD</h3>
+            <p>WMA 200/400 Çizgi Taraması</p>
+        </div>
+        <button onclick="triggerScan('HU Gunluk')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>8. Mavilim Haftalık + MACD</h3>
+            <p>WMA Zincir Stratejisi</p>
+        </div>
+        <button onclick="triggerScan('Mavilim Haftalik')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>9. Hassas Dip & Orta Bant</h3>
+            <p>RSI Hassas Bant Taraması</p>
+        </div>
+        <button onclick="triggerScan('Hassas Dip Orta')">Şimdi Tara</button>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <h3>10. Auto VWAP2</h3>
+            <p>Dinamik Adaptif VWAP Sinyali</p>
+        </div>
+        <button onclick="triggerScan('Auto VWAP2')">Şimdi Tara</button>
+    </div>
+</div>
+
+<script>
+    function triggerScan(strategyName) {
+        const box = document.getElementById('status-box');
+        box.style.display = 'block';
+        box.innerText = `⏳ "${strategyName}" için tarama emri GitHub'a iletiliyor...`;
+
+        // GitHub Repository Dispatch API bilgileri (Kendi kullanıcı adınızı ve repo adınızı buraya yazacaksınız)
+        const repoOwner = "55hakan"; 
+        const repoName = "bist-tarayici"; // Kendi deponuzun adı
+        const githubToken = ""; // Buraya GitHub Personal Access Token (PAT) gerekecek veya backend üzerinden çalıştırılacak
+
+        // Bilgilendirme amaçlı geçici simülasyon uyarısı
+        setTimeout(() => {
+            box.innerText = `✅ "${strategyName}" tetiklendi! Sonuçlar birazdan Telegram'a gelecek.`;
+            setTimeout(() => { box.style.display = 'none'; }, 4000);
+        }, 1500);
+    }
+</script>
+
+</body>
+</html>
