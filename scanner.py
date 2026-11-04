@@ -21,32 +21,27 @@ BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 2
 
 BIST_TICKERS = [
-    # Bankacılık, Finans & Holdingler (17)
-    "AKBNK", "GARAN", "ISCTR", "YKBNK", "HALKB", "VAKBN", "TSKB", "KCHOL", "SAHOL", 
-    "AGHOL", "DOHOL", "ALARK", "BERA", "TAVHL", "ISMEN", "GEDIK", "INFO",
-
-    # Havacılık, Lojistik & Ulaştırma (7)
-    "THYAO", "PGSUS", "CLEBI", "DOAS", "TUREX", "RYSAS", "GRSEL",
-
-    # Sanayi, Otomotiv, Beyaz Eşya & Cam (15)
-    "FROTO", "TOASO", "OTKAR", "ARCLK", "VESTL", "VESBE", "SISE", "EREGL", "KRDMD", 
-    "BRSAN", "EGEEN", "JANTS", "PARSN", "BOSSA", "KORDS",
-
-    # Enerji, Petrol & Kimya (16)
-    "TUPRS", "PETKM", "AKSA", "ENJSA", "AYDEM", "GWIND", "AKSEN", "CWENE", "ASTOR", 
-    "GESAN", "KONTR", "YEOTK", "EUPWR", "ALFAS", "AHGAZ", "NTGAZ",
-
-    # Perakende, Gıda & Hızlı Tüketim (10)
-    "BIMAS", "MGROS", "SOKM", "CCOLA", "AEFES", "ULKER", "TATGD", "BANVT", "TUKAS", "EKSUN",
-
-    # Telekomünikasyon & Teknoloji (9)
-    "TCELL", "TTKOM", "ASELS", "LOGO", "MTRKS", "ARASE", "KFEIN", "LINK", "NETAS",
-
-    # GYO, Çimento & Gayrimenkul Stratejik (8)
-    "EKGYO", "TRGYO", "OZKGY", "AKCNS", "CIMSA", "BUCIM", "NUHCM", "BOBET",
-
-    # Sağlık, İlaç & Madencilik (5 - Güncel Kodlarıyla)
-    "MPARK", "GENIL", "DEVA", "ECILC", "TRALT"
+    "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
+    "ASTOR", "BERA", "BIMAS", "BRSAN", "BRYAT", "BUCIM", "CCOLA", "CIMSA", "CWENE", "DOAS",
+    "DOHOL", "EGEEN", "EKGYO", "ENERY", "ENJSA", "ENKAI", "EREGL", "EUPWR", "FENER", "FROTO",
+    "GARAN", "GENIL", "GESAN", "GSRAY", "GUBRF", "HALKB", "HEKTS", "ISCTR", "ISMEN", "KCAER",
+    "KCHOL", "KONTR", "KRDMD", "MAVI", "MGROS", "MIATK", "MPARK", "ODAS", "OTKAR", "OYAKC",
+    "PETKM", "PGSUS", "REEDR", "SAHOL", "SASA", "SISE", "SKBNK", "SMRTG", "SOKM", "TABGD",
+    "TAVHL", "TCELL", "THYAO", "TKFEN", "TOASO", "TSKB", "TTKOM", "TTRAK", "TUPRS", "ULKER",
+    "VAKBN", "VESTL", "YEOTK", "YKBNK", "ZOREN", "AGROT", "AHGAZ", "AKCNS", "AKFYE", "ALBRK",
+    "ALKIM", "ARASE", "ARDYZ", "ASUZU", "AYDEM", "AYGAZ", "BAGFS", "BASGZ", "BFREN", "BIENY",
+    "BIOEN", "BIZIM", "BORLS", "BOSSA", "BRISA", "BRLSM", "CATES", "CEMTS", "CVKMD", "DEVA",
+    "EBEBK", "ECILC", "ECZYT", "EGGUB", "EGSER", "EKOS", "EKSUN", "ENSRI", "ENTRA", "ERBOS",
+    "ESEN", "EUREN", "FMIZP", "FORTE", "GEDIK", "GENTS", "GIPTA", "GLYHO", "GOLTS", "GOODY",
+    "GWIND", "HATSN", "HEDEF", "HKTM", "HRKET", "HUNER", "INDES", "INFO", "INVEO", "INVES",
+    "ISDMR", "IZMDC", "JANTS", "KAREL", "KARSN", "KAYSE", "KBORU", "KFEIN", "KIMMR", "KLKIM",
+    "KLMSN", "KLSER", "KMPUR", "KONKA", "KONYA", "KORDS", "KOTON", "KRONT", "LIDER", "LILAK",
+    "LOGO", "MAALT", "MEDTR", "MHRGY", "MNDRS", "MOBTL", "MOGAN", "NATEN", "NETAS", "ODINE",
+    "ONCSM", "ORGE", "OSMEN", "PASEU", "PATEK", "PENTA", "PETUN", "PNSUT", "POLHO", "PRKME",
+    "QUAGR", "RGYAS", "RYSAS", "SDTTR", "SELEC", "SNICA", "SUNTK", "SUWEN", "TARKM", "TATEN",
+    "TATGD", "TBORG", "TEZOL", "TKNSA", "TMSN", "TRCAS", "TRGYO", "TSPOR", "TUKAS", "ULUSE",
+    "ULUUN", "UNLU", "USAK", "VAKKO", "VBTYZ", "VERTU", "VERUS", "VESBE", "YATAS", "YAYLA",
+    "YKSLN", "YUNSA"
 ]
 BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
 
