@@ -253,6 +253,8 @@ def run_targeted_screener():
             
             for full_ticker in batch:
                 ticker = full_ticker.replace('.IS', '')
+                tv_link = f"https://s.tradingview.com/widgetembed/?symbol=BIST%3A{ticker}&interval=D&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&theme=dark"
+                
                 try:
                     df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
                 except: df_d = pd.DataFrame()
@@ -265,13 +267,13 @@ def run_targeted_screener():
                 if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"] and not df_d.empty and len(df_d) >= 180:
                     res = calculate_rsi_most_matrix(df_d['Close'])
                     if res["blue_cross_red_above_50"]: 
-                        s1_uzun_ralli.append(f"• <b>{ticker}</b> ({df_d['Close'].iloc[-1]:.2f}₺)")
+                        s1_uzun_ralli.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_d['Close'].iloc[-1]:.2f}₺)")
                         
                 # 2. Base 30
                 if SELECTED_STRATEGY in ["Hepsi", "Base 30 Kesisişi"] and not df_d.empty and len(df_d) >= 30:
                     b_res = calculate_rsi_most_matrix(df_d['Close'])
                     if b_res["yellow_cross_30"]: 
-                        s2_base_30.append(f"• <b>{ticker}</b> (Günlük)")
+                        s2_base_30.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Günlük)")
                         
                 # 3. Matrix Orta Hat
                 if SELECTED_STRATEGY in ["Hepsi", "Matrix Orta Hat"] and not df_d.empty and len(df_d) >= 100:
@@ -279,47 +281,47 @@ def run_targeted_screener():
                     if len(df_w_res) >= 50:
                         m_res = calculate_rsi_most_matrix(df_w_res['Close'])
                         if (m_res["mov40"].iloc[-1] > 50 and m_res["mov40"].iloc[-2] <= 50):
-                            s3_matrix_wm.append(f"• <b>{ticker}</b> (Haftalık)")
+                            s3_matrix_wm.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Haftalık)")
                         
                 # 4. Üçlü Kesişim
                 if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]:
                     if not df_d.empty and check_triple_confluence_signal(df_d): 
-                        s4_uclu_kesisim.append(f"• <b>{ticker}</b> (Günlük)")
+                        s4_uclu_kesisim.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Günlük)")
                     if not df_w.empty and check_triple_confluence_signal(df_w): 
-                        s4_uclu_kesisim.append(f"• <b>{ticker}</b> (Haftalık)")
+                        s4_uclu_kesisim.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Haftalık)")
                         
                 # 5. Leda Günlük
                 if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"] and not df_d.empty and len(df_d) >= 35:
                     res_d = calculate_leda_indicators(df_d)
                     if res_d is not None and res_d["buy"].iloc[-1] and check_macd_cross(df_d):
-                        s5_leda_d.append(f"• <b>{ticker}</b>")
+                        s5_leda_d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
                         
                 # 6. Leda Haftalık
                 if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"] and not df_w.empty and len(df_w) >= 35:
                     res_w = calculate_leda_indicators(df_w)
                     if res_w is not None and res_w["buy"].iloc[-1] and check_macd_cross(df_w):
-                        s6_leda_w.append(f"• <b>{ticker}</b>")
+                        s6_leda_w.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
                         
                 # 7. HU Günlük
                 if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"] and not df_d.empty and check_hu_cross_signal(df_d) and check_macd_cross(df_d):
-                    s7_hu_d.append(f"• <b>{ticker}</b>")
+                    s7_hu_d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
                     
                 # 8. Mavilim Haftalık
                 if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"] and not df_w.empty and check_mavilim_signal(df_w) and check_macd_cross(df_w):
-                    s8_mav_w.append(f"• <b>{ticker}</b>")
+                    s8_mav_w.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
                     
                 # 9. Hassas Dip Orta
                 if SELECTED_STRATEGY in ["Hepsi", "Hassas Dip Orta"] and not df_d.empty and len(df_d) >= 180:
                     dip, orta = calculate_rsi_signals(df_d['Close'])
-                    if dip: s9_hassas_dip_orta.append(f"• <b>{ticker} (DİP)</b>")
-                    if orta: s9_hassas_dip_orta.append(f"• <b>{ticker} (ORTA)</b>")
+                    if dip: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (DİP)")
+                    if orta: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (ORTA)")
 
                 # 10. Auto VWAP2
                 if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_d.empty and len(df_d) >= 50:
                     df_vwap = calculate_auto_vwap2(df_d, "1D")
                     if df_vwap is not None:
                         if df_vwap['Trend'].iloc[-1] != df_vwap['Trend'].iloc[-2]:
-                            s10_auto_vwap.append(f"• <b>{ticker}</b> ({df_vwap['Trend'].iloc[-1]})")
+                            s10_auto_vwap.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_vwap['Trend'].iloc[-1]})")
 
         except Exception as e:
             print(f"Batch Hatası: {e}")
