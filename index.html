@@ -20,22 +20,9 @@
             margin: 0;
             padding: 20px;
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        h1 {
-            text-align: center;
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: #ffffff;
-        }
-        .subtitle {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #8b949e;
-            margin-bottom: 20px;
-        }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 1.5rem; margin-bottom: 5px; color: #ffffff; }
+        .subtitle { text-align: center; font-size: 0.9rem; color: #8b949e; margin-bottom: 20px; }
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -45,18 +32,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .info h3 {
-            margin: 0 0 5px 0;
-            font-size: 1rem;
-            color: #58a6ff;
-        }
-        .info p {
-            margin: 0;
-            font-size: 0.75rem;
-            color: #8b949e;
-        }
+        .info h3 { margin: 0 0 5px 0; font-size: 1rem; color: #58a6ff; }
+        .info p { margin: 0; font-size: 0.75rem; color: #8b949e; }
         .btn {
             background-color: var(--accent-color);
             color: white;
@@ -77,36 +55,29 @@
 
 <div class="container">
     <h1>🎯 HAKAN MATRİX PANEL</h1>
-    <div class="subtitle">BIST & Kripto Akıllı Kontrol Paneli</div>
+    <div class="subtitle">BIST 10'lu Akıllı Kontrol Paneli</div>
 
-    <!-- 10 Strateji Butonları (Doğrudan Seçim Linkli) -->
-    <div class="card"><div class="info"><h3>1. Uzun Vadeli Ralli</h3><p>Günlük Matrix Ralli Taraması</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Uzun Vade Ralli')">Şimdi Tara</a></div>
+    <!-- Tek dosya üzerinden çalışan akıllı yönlendirme butonları -->
+    <div class="card"><div class="info"><h3>1. Uzun Vadeli Ralli</h3><p>Günlük Matrix Ralli</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>2. RSI-MOST Base 30</h3><p>Günlük Kesişim Taraması</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Base 30 Kesisişi')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>2. RSI-MOST Base 30</h3><p>Günlük Kesişim</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>3. Matrix Orta Hat (50)</h3><p>Haftalık Orta Hat Taraması</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Matrix Orta Hat')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>3. Matrix Orta Hat (50)</h3><p>Haftalık Orta Hat</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>4. Üçlü Confluence</h3><p>Leda + Mavilim + WMA79</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Uclu Kesisim')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>4. Üçlü Confluence</h3><p>Leda + Mavilim + WMA79</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>5. LEDA Günlük + MACD</h3><p>Günlük Trend ve Momentum</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Leda Gunluk')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>5. LEDA Günlük + MACD</h3><p>Günlük Trend</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>6. LEDA Haftalık + MACD</h3><p>Haftalık Güçlü Trend</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Leda Haftalik')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>6. LEDA Haftalık + MACD</h3><p>Haftalık Trend</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>7. HU Günlük + MACD</h3><p>WMA 200/400 Çizgi Taraması</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('HU Gunluk')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>7. HU Günlük + MACD</h3><p>WMA 200/400 Çizgi</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>8. Mavilim Haftalık + MACD</h3><p>WMA Zincir Stratejisi</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Mavilim Haftalik')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>8. Mavilim Haftalık + MACD</h3><p>WMA Zincir</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>9. Hassas Dip & Orta Bant</h3><p>RSI Hassas Bant Taraması</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Hassas Dip Orta')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>9. Hassas Dip & Orta Bant</h3><p>RSI Hassas Bant</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>10. Auto VWAP2</h3><p>Dinamik Adaptif VWAP Sinyali</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn" onclick="setStrat('Auto VWAP2')">Şimdi Tara</a></div>
+    <div class="card"><div class="info"><h3>10. Auto VWAP2</h3><p>Dinamik Adaptif VWAP</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/scanner.yml" target="_blank" class="btn">Şimdi Tara</a></div>
 </div>
-
-<script>
-    // Bilgi amaçlı yönlendirme logu
-    function setStrat(name) {
-        console.log(name + " seçildi.");
-    }
-</script>
 
 </body>
 </html>
