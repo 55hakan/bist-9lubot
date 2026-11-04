@@ -34,14 +34,14 @@
             text-align: center;
             font-size: 0.9rem;
             color: #8b949e;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 15px 20px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -57,7 +57,7 @@
             font-size: 0.75rem;
             color: #8b949e;
         }
-        .btn {
+        button {
             background-color: var(--accent-color);
             color: white;
             border: none;
@@ -66,13 +66,21 @@
             font-weight: bold;
             cursor: pointer;
             font-size: 0.85rem;
-            text-decoration: none;
-            display: inline-block;
             transition: background-color 0.2s;
             white-space: nowrap;
         }
-        .btn:hover {
-            background-color: var(--accent-hover);
+        button:hover { background-color: var(--accent-hover); }
+        button:active { transform: scale(0.96); }
+        #status-box {
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #1f6feb22;
+            border: 1px solid #1f6feb;
+            color: #58a6ff;
+            text-align: center;
+            display: none;
+            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -80,96 +88,65 @@
 
 <div class="container">
     <h1>🎯 Master Sinyal Paneli</h1>
-    <div class="subtitle">BIST 10'lu Strateji Kontrol Paneli</div>
+    <div class="subtitle">BIST & Kripto 10'lu Akıllı Kontrol Paneli</div>
 
-    <div class="card" style="background-color: #1f6feb22; border-color: #1f6feb;">
-        <div class="info">
-            <h3 style="color: #58a6ff;">🚀 GitHub Actions Paneli</h3>
-            <p>Tüm stratejileri doğrudan çalıştırmak için açın</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">GitHub'a Git</a>
-    </div>
+    <div id="status-box">Komut gönderiliyor...</div>
 
-    <div class="card">
-        <div class="info">
-            <h3>1. Uzun Vadeli Ralli</h3>
-            <p>Günlük Matrix Ralli Taraması</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>2. RSI-MOST Base 30</h3>
-            <p>Günlük Kesişim Taraması</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>3. Matrix Orta Hat (50)</h3>
-            <p>Haftalık Orta Hat Taraması</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>4. Üçlü Confluence</h3>
-            <p>Leda + Mavilim + WMA79</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>5. LEDA Günlük + MACD</h3>
-            <p>Günlük Trend ve Momentum</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>6. LEDA Haftalık + MACD</h3>
-            <p>Haftalık Güçlü Trend</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>7. HU Günlük + MACD</h3>
-            <p>WMA 200/400 Çizgi Taraması</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>8. Mavilim Haftalık + MACD</h3>
-            <p>WMA Zincir Stratejisi</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>9. Hassas Dip & Orta Bant</h3>
-            <p>RSI Hassas Bant Taraması</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <h3>10. Auto VWAP2</h3>
-            <p>Dinamik Adaptif VWAP Sinyali</p>
-        </div>
-        <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
-    </div>
+    <!-- 10 Strateji Butonları -->
+    <div class="card"><div class="info"><h3>1. Uzun Vadeli Ralli</h3><p>Günlük Matrix Ralli Taraması</p></div><button onclick="runScan('Uzun Vade Ralli')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>2. RSI-MOST Base 30</h3><p>Günlük Kesişim Taraması</p></div><button onclick="runScan('Base 30 Kesisişi')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>3. Matrix Orta Hat (50)</h3><p>Haftalık Orta Hat Taraması</p></div><button onclick="runScan('Matrix Orta Hat')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>4. Üçlü Confluence</h3><p>Leda + Mavilim + WMA79</p></div><button onclick="runScan('Uclu Kesisim')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>5. LEDA Günlük + MACD</h3><p>Günlük Trend ve Momentum</p></div><button onclick="runScan('Leda Gunluk')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>6. LEDA Haftalık + MACD</h3><p>Haftalık Güçlü Trend</p></div><button onclick="runScan('Leda Haftalik')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>7. HU Günlük + MACD</h3><p>WMA 200/400 Çizgi Taraması</p></div><button onclick="runScan('HU Gunluk')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>8. Mavilim Haftalık + MACD</h3><p>WMA Zincir Stratejisi</p></div><button onclick="runScan('Mavilim Haftalik')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>9. Hassas Dip & Orta Bant</h3><p>RSI Hassas Bant Taraması</p></div><button onclick="runScan('Hassas Dip Orta')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>10. Auto VWAP2</h3><p>Dinamik Adaptif VWAP Sinyali</p></div><button onclick="runScan('Auto VWAP2')">Şimdi Tara</button></div>
 </div>
+
+<script>
+    // GitHub tokenınızı buraya bir kere yazıyorsunuz. (Sadece kendi cihazınızda çalışacağı için gizli kalır)
+    const GITHUB_TOKEN = "BURAYA_GITHUB_TOKEN_YAZILACAK"; 
+    const REPO_OWNER = "55hakan";
+    const REPO_NAME = "bist-9lubot";
+
+    function runScan(strategyName) {
+        if(GITHUB_TOKEN === "BURAYA_GITHUB_TOKEN_YAZILACAK") {
+            alert("Lütfen index.html içindeki GITHUB_TOKEN alanına kendi tokeninizi yazın.");
+            return;
+        }
+
+        const box = document.getElementById('status-box');
+        box.style.display = 'block';
+        box.innerText = `⏳ "${strategyName}" tetikleniyor...`;
+
+        fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
+            method: 'POST',
+            headers: {
+                "Authorization": `token ${GITHUB_TOKEN}`,
+                "Accept": "application/vnd.github.v3+json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                event_type: "run-strategy",
+                client_payload: { strategy: strategyName }
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                box.innerText = `✅ "${strategyName}" başarıyla başlatıldı! Arka planda taranıyor, sonuçlar Telegram'a gelecek.`;
+            } else {
+                box.innerText = `⚠️ İstek iletildi fakat GitHub yanıtı hatalı (Token yetkisini kontrol edin).`;
+            }
+            setTimeout(() => { box.style.display = 'none'; }, 5000);
+        })
+        .catch(error => {
+            box.innerText = `❌ Bağlantı hatası oluştu.`;
+            setTimeout(() => { box.style.display = 'none'; }, 4000);
+        });
+    }
+</script>
 
 </body>
 </html>
