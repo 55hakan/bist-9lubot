@@ -1,9 +1,25 @@
-name: BIST Sinyal Tarayici
+name: Master Sinyal Tarayici
 
 on:
-  schedule:
-    - cron: '20 7-15 * * 1-5'
   workflow_dispatch:
+    inputs:
+      strategy:
+        description: 'Çalıştırılacak Strateji'
+        required: true
+        default: 'Hepsi'
+        type: choice
+        options:
+          - 'Hepsi'
+          - 'Uzun Vade Ralli'
+          - 'Base 30 Kesisişi'
+          - 'Matrix Orta Hat'
+          - 'Uclu Kesisim'
+          - 'Leda Gunluk'
+          - 'Leda Haftalik'
+          - 'HU Gunluk'
+          - 'Mavilim Haftalik'
+          - 'Hassas Dip Orta'
+          - 'Auto VWAP2'
 
 jobs:
   run-scanner:
@@ -25,5 +41,6 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
+          SELECTED_STRATEGY: ${{ github.event.inputs.strategy }}
         run: |
           python scanner.py
