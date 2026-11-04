@@ -1,4 +1,4 @@
-name: Master Sinyal Tarayici
+name: BIST Sinyal Tarayici
 
 on:
   workflow_dispatch:
@@ -20,6 +20,8 @@ on:
           - 'Mavilim Haftalik'
           - 'Hassas Dip Orta'
           - 'Auto VWAP2'
+  repository_dispatch:
+    types: [run-strategy]
 
 jobs:
   run-scanner:
@@ -41,6 +43,6 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-          SELECTED_STRATEGY: ${{ github.event.inputs.strategy }}
+          SELECTED_STRATEGY: ${{ github.event.client_payload.strategy || github.event.inputs.strategy || 'Hepsi' }}
         run: |
           python scanner.py
