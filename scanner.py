@@ -223,21 +223,93 @@ def calculate_rsi_signals(series_close: pd.Series):
     orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
     return dip_signal, orta_signal
 
-def calculate_auto_vwap2(df: pd.Series, interval_type="1D"):
-    """
-    Auto VWAP2 Stratejisi: 
-    Doğru hesaplama için günlük kapanış yerine fiyat ve hacim kümülatif verisi işlenir.
-    """
+# ======================================================================
+# 🔄 PINE SCRIPT BİREBİR UYUMLU AUTO VWAP2 HESAPLAMA MOTORU
+# ======================================================================
+def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
     try:
-        if len(df) < 20: return None
+        if len(df) < 100: return None
         df = df.copy()
-        tp = (df['High'] + df['Low'] + df['Close']) / 3
-        # Kümülatif VWAP hesaplaması
-        vwap = (tp * df['Volume']).cumsum() / df['Volume'].cumsum()
-        df['VWAP'] = vwap
-        df['Trend'] = np.where(df['Close'] > df['VWAP'], 'BULLISH', 'BEARISH')
+        
+        # Ayarlar (Pine Script'teki mantıkla birebir)
+        if timeframe_str == "1D":
+            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 50, 20, True, 10, 50
+        else: # 1H veya intraday için varsayılanlar
+            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 75, 15, False, 10, 40
+
+        high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
+        hlc3 = (high + low + close) / 3
+        
+        # ATR ve Adaptif Alpha Hesaplaması
+        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
+        atr2 = tr.rolling(window=atrLen2).mean()
+        atrAvg2 = pine_rma(atr2, atrLen2)
+        ratio2 = np.where(atrAvg2 > 0, atr2 / atrAvg2, 1.0)
+        
+        aptRaw2 = np.where(useAdapt2, baseAPT2 / np.power(ratio2, volBias2), baseAPT2)
+        aptClamped2 = np.clip(aptRaw2, 5.0, 300.0)
+        aptSeries2 = np.round(aptClamped2)
+        
+        # Alpha decay fonksiyonu
+        alphas = 1.0 - np.exp(-np.log(2.0) / np.maximum(1.0, aptSeries2))
+
+        # Swing Tespiti (Tepe ve Dip)
+        highest_bars = high.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmax(), raw=True)
+        lowest_bars = low.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmin(), raw=True)
+        
+        # Pine Script'teki döngü mantığını simüle eden vektörel/iteratif VWAP
+        vwap_vals = []
+        current_vwap_p = None
+        current_vwap_vol = None
+        dir2 = 1
+        
+        last_ph = np.nan
+        prev_ph = np.nan
+        last_pl = np.nan
+        prev_pl = np.nan
+        last_ph_bar = -1
+        last_pl_bar = -1
+        
+        for i in range(len(df)):
+            if highest_bars.iloc[i] == 0:
+                prev_ph = last_ph
+                last_ph = high.iloc[i]
+                last_ph_bar = i
+            if lowest_bars.iloc[i] == 0:
+                prev_pl = last_pl
+                last_pl = low.iloc[i]
+                last_pl_bar = i
+                
+            if not np.isnan(last_ph_bar) and not np.isnan(last_pl_bar) and last_ph_bar >= 0 and last_pl_bar >= 0:
+                new_dir = 1 if last_pl_bar > last_ph_bar else -1
+                if new_dir != dir2:
+                    dir2 = new_dir
+                    x2 = last_pl_bar if dir2 > 0 else last_ph_bar
+                    y2 = last_pl if dir2 > 0 else last_ph
+                    barsback = max(0, i - int(x2))
+                    vol_at_anchor = volume.iloc[i - barsback] if (i - barsback) >= 0 else volume.iloc[i]
+                    current_vwap_p = y2 * vol_at_anchor
+                    current_vwap_vol = vol_at_anchor
+            
+            # Güncelleme adımı
+            alpha = alphas.iloc[i]
+            pxv = hlc3.iloc[i] * volume.iloc[i]
+            v0 = volume.iloc[i]
+            
+            if current_vwap_p is None or np.isnan(current_vwap_p):
+                current_vwap_p = pxv
+                current_vwap_vol = v0
+            else:
+                current_vwap_p = (1 - alpha) * current_vwap_p + alpha * pxv
+                current_vwap_vol = (1 - alpha) * current_vwap_vol + alpha * v0
+                
+            vap = current_vwap_p / current_vwap_vol if current_vwap_vol > 0 else np.nan
+            vwap_vals.append(vap)
+            
+        df['VWAP2'] = vwap_vals
+        df['Trend'] = np.where(df['Close'] > df['VWAP2'], 'BULLISH', 'BEARISH')
         return df
-    except:
+    except Exception as e:
         return None
 
 # ======================================================================
@@ -248,26 +320,29 @@ def run_targeted_screener():
     telegram_gonder(f"🎯 Tarama Başlatıldı. Mod: <b>{SELECTED_STRATEGY}</b>")
     
     s1_uzun_ralli, s2_base_30, s3_matrix_wm, s4_uclu_kesisim = [], [], [], []
-    s5_leda_d, s6_leda_w, s7_hu_d, s8_mav_w, s9_hassas_dip_orta, s10_auto_vwap = [], [], [], [], [], []
+    s5_leda_d, s6_leda_w, s7_hu_d, s8_mav_w, s9_hassas_dip_orta = [], [], [], [], []
+    s10_vwap_1d, s10_vwap_1h = [], []
 
     for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
         batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
         try:
+            # Hem Günlük (1d) hem de Saatlik (1h) verileri çekiyoruz
             data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
             data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
+            data_1h = yf.download(batch, interval="1h", period="60d", progress=False, group_by='ticker', auto_adjust=True, threads=False)
             
             for full_ticker in batch:
                 ticker = full_ticker.replace('.IS', '')
-                # DÜZELTME: Kesin çalışan ve hata vermeyen TradingView standart grafik bağlantısı
                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}"
                 
-                try:
-                    df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
+                try: df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
                 except: df_d = pd.DataFrame()
                 
-                try:
-                    df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
+                try: df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
                 except: df_w = pd.DataFrame()
+
+                try: df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
+                except: df_h = pd.DataFrame()
                 
                 # 1. Uzun Vade Ralli
                 if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"] and not df_d.empty and len(df_d) >= 180:
@@ -322,12 +397,19 @@ def run_targeted_screener():
                     if dip: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (DİP)")
                     if orta: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (ORTA)")
 
-                # 10. Auto VWAP2 (Günlük periyotta güncellenmiş güvenli kümülatif trend kontrolü)
-                if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_d.empty and len(df_d) >= 50:
-                    df_vwap = calculate_auto_vwap2(df_d, "1D")
-                    if df_vwap is not None:
-                        if df_vwap['Trend'].iloc[-1] != df_vwap['Trend'].iloc[-2]:
-                            s10_auto_vwap.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_vwap['Trend'].iloc[-1]})")
+                # 10. Auto VWAP2 (GÜNLÜK Taraması)
+                if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_d.empty and len(df_d) >= 100:
+                    df_v_1d = calculate_auto_vwap2_pine_logic(df_d, "1D")
+                    if df_v_1d is not None and len(df_v_1d) >= 2:
+                        if df_v_1d['Trend'].iloc[-1] != df_v_1d['Trend'].iloc[-2]:
+                            s10_vwap_1d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1d['Trend'].iloc[-1]})")
+
+                # 10. Auto VWAP2 (SAATLİK Taraması)
+                if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_h.empty and len(df_h) >= 100:
+                    df_v_1h = calculate_auto_vwap2_pine_logic(df_h, "1H")
+                    if df_v_1h is not None and len(df_v_1h) >= 2:
+                        if df_v_1h['Trend'].iloc[-1] != df_v_1h['Trend'].iloc[-2]:
+                            s10_vwap_1h.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1h['Trend'].iloc[-1]})")
 
         except Exception as e:
             print(f"Batch Hatası: {e}")
@@ -346,11 +428,13 @@ def run_targeted_screener():
     if SELECTED_STRATEGY in ["Hepsi", "Matrix Orta Hat"]: report("📅 3. MATRIX ORTA HAT (50) KESİŞİMİ", s3_matrix_wm)
     if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]: report("💥 4. ÜÇLÜ KESİŞİM STRATEJİSİ", s4_uclu_kesisim)
     if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"]: report("📈 5. LEDA GÜNLÜK + MACD", s5_leda_d)
-    if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]: report("📈 6. LEDA HAFTALIK + MACD", s6_leda_w)
+    if SELECTED_STRATEJS := (SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]): report("📈 6. LEDA HAFTALIK + MACD", s6_leda_w)
     if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"]: report("💎 7. HU GÜNLÜK + MACD", s7_hu_d)
     if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: report("🌊 8. MAVİLİM HAFTALIK + MACD", s8_mav_w)
     if SELECTED_STRATEGY in ["Hepsi", "Hassas Dip Orta"]: report("🎯 9. HASSAS DİP VE ORTA BANT TARAMASI", s9_hassas_dip_orta)
-    if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"]: report("🔵 10. AUTO VWAP2 SİNYAL DEĞİŞİKLİĞİ", s10_auto_vwap)
+    if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"]: 
+        report("🔵 10. AUTO VWAP2 TREND DEĞİŞİKLİĞİ (GÜNLÜK)", s10_vwap_1d)
+        report("🔵 10. AUTO VWAP2 TREND DEĞİŞİKLİĞİ (SAATLİK)", s10_vwap_1h)
 
 if __name__ == "__main__":
     run_targeted_screener()
