@@ -1,4 +1,4 @@
-name: BIST Sinyal Tarayici
+name: BIST Master Bot
 
 on:
   workflow_dispatch:
@@ -7,22 +7,30 @@ on:
         description: 'Çalıştırılacak Strateji'
         required: true
         default: 'Hepsi'
-        type: choice
-        options:
-          - 'Hepsi'
-          - 'Uzun Vade Ralli'
-          - 'Base 30 Kesisişi'
-          - 'Matrix Orta Hat'
-          - 'Uclu Kesisim'
-          - 'Leda Gunluk'
-          - 'Leda Haftalik'
-          - 'HU Gunluk'
-          - 'Mavilim Haftalik'
-          - 'Hassas Dip Orta'
-          - 'Auto VWAP2'
   repository_dispatch:
-    types: [run-strategy]
+    types: [run-scanner]
 
+jobs:
+  run-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Python Kurulumu
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Kütüphaneleri Yükle
+        run: pip install pandas numpy requests yfinance
+
+      - name: Botu Başlat
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          # Web panelinden gelen stratejiyi veya manuel tetiklemeyi yakalar
+          SELECTED_STRATEGY: ${{ github.event.client_payload.strategy || 'Hepsi' }}
+        run: python scanner.py
 jobs:
   run-scanner:
     runs-on: ubuntu-latest
