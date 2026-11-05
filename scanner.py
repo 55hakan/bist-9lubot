@@ -223,24 +223,19 @@ def calculate_rsi_signals(series_close: pd.Series):
     orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
     return dip_signal, orta_signal
 
-# ======================================================================
-# 🔄 PINE SCRIPT BİREBİR UYUMLU AUTO VWAP2 HESAPLAMA MOTORU
-# ======================================================================
 def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
     try:
         if len(df) < 100: return None
         df = df.copy()
         
-        # Ayarlar (Pine Script'teki mantıkla birebir)
         if timeframe_str == "1D":
             prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 50, 20, True, 10, 50
-        else: # 1H veya intraday için varsayılanlar
+        else: 
             prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 75, 15, False, 10, 40
 
         high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
         hlc3 = (high + low + close) / 3
         
-        # ATR ve Adaptif Alpha Hesaplaması
         tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
         atr2 = tr.rolling(window=atrLen2).mean()
         atrAvg2 = pine_rma(atr2, atrLen2)
@@ -250,14 +245,11 @@ def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
         aptClamped2 = np.clip(aptRaw2, 5.0, 300.0)
         aptSeries2 = np.round(aptClamped2)
         
-        # Alpha decay fonksiyonu
         alphas = 1.0 - np.exp(-np.log(2.0) / np.maximum(1.0, aptSeries2))
 
-        # Swing Tespiti (Tepe ve Dip)
         highest_bars = high.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmax(), raw=True)
         lowest_bars = low.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmin(), raw=True)
         
-        # Pine Script'teki döngü mantığını simüle eden vektörel/iteratif VWAP
         vwap_vals = []
         current_vwap_p = None
         current_vwap_vol = None
@@ -291,7 +283,6 @@ def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
                     current_vwap_p = y2 * vol_at_anchor
                     current_vwap_vol = vol_at_anchor
             
-            # Güncelleme adımı
             alpha = alphas.iloc[i]
             pxv = hlc3.iloc[i] * volume.iloc[i]
             v0 = volume.iloc[i]
@@ -326,7 +317,6 @@ def run_targeted_screener():
     for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
         batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
         try:
-            # Hem Günlük (1d) hem de Saatlik (1h) verileri çekiyoruz
             data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
             data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
             data_1h = yf.download(batch, interval="1h", period="60d", progress=False, group_by='ticker', auto_adjust=True, threads=False)
@@ -354,7 +344,7 @@ def run_targeted_screener():
                 if SELECTED_STRATEGY in ["Hepsi", "Base 30 Kesisişi"] and not df_d.empty and len(df_d) >= 30:
                     b_res = calculate_rsi_most_matrix(df_d['Close'])
                     if b_res["yellow_cross_30"]: 
-                        s2_base_30.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Günlük)")
+                        s2_base_30.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Günlük) - {df_d['Close'].iloc[-1]:.2f}₺")
                         
                 # 3. Matrix Orta Hat
                 if SELECTED_STRATEGY in ["Hepsi", "Matrix Orta Hat"] and not df_d.empty and len(df_d) >= 100:
@@ -362,54 +352,54 @@ def run_targeted_screener():
                     if len(df_w_res) >= 50:
                         m_res = calculate_rsi_most_matrix(df_w_res['Close'])
                         if (m_res["mov40"].iloc[-1] > 50 and m_res["mov40"].iloc[-2] <= 50):
-                            s3_matrix_wm.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Haftalık)")
+                            s3_matrix_wm.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Haftalık) - {df_d['Close'].iloc[-1]:.2f}₺")
                         
                 # 4. Üçlü Kesişim
                 if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]:
                     if not df_d.empty and check_triple_confluence_signal(df_d): 
-                        s4_uclu_kesisim.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Günlük)")
+                        s4_uclu_kesisim.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Günlük) - {df_d['Close'].iloc[-1]:.2f}₺")
                     if not df_w.empty and check_triple_confluence_signal(df_w): 
-                        s4_uclu_kesisim.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Haftalık)")
+                        s4_uclu_kesisim.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Haftalık) - {df_w['Close'].iloc[-1]:.2f}₺")
                         
                 # 5. Leda Günlük
                 if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"] and not df_d.empty and len(df_d) >= 35:
                     res_d = calculate_leda_indicators(df_d)
                     if res_d is not None and res_d["buy"].iloc[-1] and check_macd_cross(df_d):
-                        s5_leda_d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
+                        s5_leda_d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> - {df_d['Close'].iloc[-1]:.2f}₺")
                         
                 # 6. Leda Haftalık
                 if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"] and not df_w.empty and len(df_w) >= 35:
                     res_w = calculate_leda_indicators(df_w)
                     if res_w is not None and res_w["buy"].iloc[-1] and check_macd_cross(df_w):
-                        s6_leda_w.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
+                        s6_leda_w.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> - {df_w['Close'].iloc[-1]:.2f}₺")
                         
                 # 7. HU Günlük
                 if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"] and not df_d.empty and check_hu_cross_signal(df_d) and check_macd_cross(df_d):
-                    s7_hu_d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
+                    s7_hu_d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> - {df_d['Close'].iloc[-1]:.2f}₺")
                     
                 # 8. Mavilim Haftalık
                 if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"] and not df_w.empty and check_mavilim_signal(df_w) and check_macd_cross(df_w):
-                    s8_mav_w.append(f"• <a href='{tv_link}'><b>{ticker}</b></a>")
+                    s8_mav_w.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> - {df_w['Close'].iloc[-1]:.2f}₺")
                     
                 # 9. Hassas Dip Orta
                 if SELECTED_STRATEGY in ["Hepsi", "Hassas Dip Orta"] and not df_d.empty and len(df_d) >= 180:
                     dip, orta = calculate_rsi_signals(df_d['Close'])
-                    if dip: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (DİP)")
-                    if orta: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (ORTA)")
+                    if dip: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (DİP) - {df_d['Close'].iloc[-1]:.2f}₺")
+                    if orta: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (ORTA) - {df_d['Close'].iloc[-1]:.2f}₺")
 
-                # 10. Auto VWAP2 (GÜNLÜK Taraması)
+                # 10. Auto VWAP2 (GÜNLÜK)
                 if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_d.empty and len(df_d) >= 100:
                     df_v_1d = calculate_auto_vwap2_pine_logic(df_d, "1D")
                     if df_v_1d is not None and len(df_v_1d) >= 2:
                         if df_v_1d['Trend'].iloc[-1] != df_v_1d['Trend'].iloc[-2]:
-                            s10_vwap_1d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1d['Trend'].iloc[-1]})")
+                            s10_vwap_1d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1d['Trend'].iloc[-1]}) - {df_d['Close'].iloc[-1]:.2f}₺")
 
-                # 10. Auto VWAP2 (SAATLİK Taraması)
+                # 10. Auto VWAP2 (SAATLİK)
                 if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_h.empty and len(df_h) >= 100:
                     df_v_1h = calculate_auto_vwap2_pine_logic(df_h, "1H")
                     if df_v_1h is not None and len(df_v_1h) >= 2:
                         if df_v_1h['Trend'].iloc[-1] != df_v_1h['Trend'].iloc[-2]:
-                            s10_vwap_1h.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1h['Trend'].iloc[-1]})")
+                            s10_vwap_1h.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1h['Trend'].iloc[-1]}) - {df_h['Close'].iloc[-1]:.2f}₺")
 
         except Exception as e:
             print(f"Batch Hatası: {e}")
@@ -428,7 +418,7 @@ def run_targeted_screener():
     if SELECTED_STRATEGY in ["Hepsi", "Matrix Orta Hat"]: report("📅 3. MATRIX ORTA HAT (50) KESİŞİMİ", s3_matrix_wm)
     if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]: report("💥 4. ÜÇLÜ KESİŞİM STRATEJİSİ", s4_uclu_kesisim)
     if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"]: report("📈 5. LEDA GÜNLÜK + MACD", s5_leda_d)
-    if SELECTED_STRATEJS := (SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]): report("📈 6. LEDA HAFTALIK + MACD", s6_leda_w)
+    if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]: report("📈 6. LEDA HAFTALIK + MACD", s6_leda_w)
     if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"]: report("💎 7. HU GÜNLÜK + MACD", s7_hu_d)
     if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: report("🌊 8. MAVİLİM HAFTALIK + MACD", s8_mav_w)
     if SELECTED_STRATEGY in ["Hepsi", "Hassas Dip Orta"]: report("🎯 9. HASSAS DİP VE ORTA BANT TARAMASI", s9_hassas_dip_orta)
