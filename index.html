@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIST Master Bot</title>
+    <title>Hakan Master Sinyal Paneli</title>
     <style>
         :root {
             --bg-color: #0d1117;
@@ -49,80 +49,34 @@
             white-space: nowrap;
         }
         .btn:hover { background-color: var(--accent-hover); }
-        .status { text-align: center; margin-bottom: 15px; font-size: 0.85rem; color: #3fb950; font-weight: bold; min-height: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🇹🇷 HAKAN MATRİX PANEL  🇹🇷</h1>
-    <div class="subtitle">Tek Dokunuşla Arka Planda Çalıştır</div>
-    
-    <div id="statusMsg" class="status"></div>
+    <h1>🎯 Master Sinyal Paneli</h1>
+    <div class="subtitle">BIST Akıllı Kontrol Paneli</div>
 
-    <!-- Strateji Butonları (Arka Planda Tetikleyici) -->
-    <div class="card"><div class="info"><h3>1. Uzun Vadeli Ralli</h3><p>Günlük Matrix Ralli</p></div><button class="btn" onclick="triggerScan('Uzun Vade Ralli')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>1. Uzun Vadeli Ralli</h3><p>Günlük Matrix Ralli</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>2. RSI-MOST Base 30</h3><p>Günlük Kesişim</p></div><button class="btn" onclick="triggerScan('Base 30 Kesisişi')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>2. RSI-MOST Base 30</h3><p>Günlük Kesişim</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>3. Matrix Orta Hat (50)</h3><p>Haftalık Orta Hat</p></div><button class="btn" onclick="triggerScan('Matrix Orta Hat')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>3. Matrix Orta Hat (50)</h3><p>Haftalık Orta Hat</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>4. Üçlü Confluence</h3><p>Leda + Mavilim + WMA79</p></div><button class="btn" onclick="triggerScan('Uclu Kesisim')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>4. Üçlü Confluence</h3><p>Leda + Mavilim + WMA79</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>5. LEDA Günlük + MACD</h3><p>Günlük Trend</p></div><button class="btn" onclick="triggerScan('Leda Gunluk')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>5. LEDA Günlük + MACD</h3><p>Günlük Trend</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>6. LEDA Haftalık + MACD</h3><p>Haftalık Trend</p></div><button class="btn" onclick="triggerScan('Leda Haftalik')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>6. LEDA Haftalık + MACD</h3><p>Haftalık Trend</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>7. HU Günlük + MACD</h3><p>WMA 200/400 Çizgi</p></div><button class="btn" onclick="triggerScan('HU Gunluk')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>7. HU Günlük + MACD</h3><p>WMA 200/400 Çizgi</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>8. Mavilim Haftalık + MACD</h3><p>WMA Zincir</p></div><button class="btn" onclick="triggerScan('Mavilim Haftalik')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>8. Mavilim Haftalık + MACD</h3><p>WMA Zincir</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>9. Hassas Dip & Orta Bant</h3><p>RSI Hassas Bant</p></div><button class="btn" onclick="triggerScan('Hassas Dip Orta')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>9. Hassas Dip & Orta Bant</h3><p>RSI Hassas Bant</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
     
-    <div class="card"><div class="info"><h3>10. Auto VWAP2</h3><p>Dinamik Adaptif VWAP</p></div><button class="btn" onclick="triggerScan('Auto VWAP2')">Şimdi Tara</button></div>
+    <div class="card"><div class="info"><h3>10. Auto VWAP2</h3><p>Dinamik Adaptif VWAP</p></div><a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Şimdi Tara</a></div>
 </div>
-
-<script>
-    // KİMLİK BİLGİLERİNİZ (Buraya kendi GitHub kullanıcı adınızı, repo adınızı ve token'ınızı yazın)
-    const GITHUB_USER = "55hakan";
-    const REPO_NAME = "bist-9lubot";
-    const GITHUB_TOKEN = "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"; // Örn: ghp_xxxxxxxxxxxxxxxxxxxx
-
-    async function triggerScan(strategyName) {
-        const statusEl = document.getElementById("statusMsg");
-        statusEl.style.color = "#58a6ff";
-        statusEl.innerText = `⏳ "${strategyName}" taraması başlatılıyor...`;
-
-        const url = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/dispatches`;
-
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Accept": "application/vnd.github+json",
-                    "Authorization": `Bearer ${GITHUB_TOKEN}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    event_type: "run-scanner",
-                    client_payload: { strategy: strategyName }
-                })
-            });
-
-            if (response.ok || response.status === 204) {
-                statusEl.style.color = "#3fb950";
-                statusEl.innerText = `✅ "${strategyName}" başarıyla tetiklendi! Telegram'ı kontrol edin.`;
-            } else {
-                statusEl.style.color = "#f85149";
-                statusEl.innerText = `❌ Başlatılamadı! Token veya repo adını kontrol edin.`;
-            }
-        } catch (error) {
-            statusEl.style.color = "#f85149";
-            statusEl.innerText = `❌ Bağlantı hatası oluştu.`;
-            console.error(error);
-        }
-    }
-</script>
 
 </body>
 </html>
