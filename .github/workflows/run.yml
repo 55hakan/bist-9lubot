@@ -7,8 +7,8 @@ on:
         description: 'Çalıştırılacak Strateji'
         required: true
         default: 'Hepsi'
-  repository_dispatch:
-    types: [run-scanner]
+  schedule:
+    - cron: '0 9 * * 1-5'
 
 jobs:
   run-scan:
@@ -28,29 +28,5 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-          # Web panelinden gelen stratejiyi veya manuel tetiklemeyi yakalar
-          SELECTED_STRATEGY: ${{ github.event.client_payload.strategy || 'Hepsi' }}
+          SELECTED_STRATEGY: ${{ github.event.inputs.strategy || 'Hepsi' }}
         run: python scanner.py
-jobs:
-  run-scanner:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Kodlari Kopyala
-        uses: actions/checkout@v3
-
-      - name: Python Kurulumu
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Kutuphaneleri Yukle
-        run: |
-          pip install pandas numpy requests yfinance
-
-      - name: Botu Calistir
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
-          SELECTED_STRATEGY: ${{ github.event.client_payload.strategy || github.event.inputs.strategy || 'Hepsi' }}
-        run: |
-          python scanner.py
