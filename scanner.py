@@ -233,31 +233,40 @@ def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
         if len(df) < 100: return None
         df = df.copy()
         
+        # Orijinal Pine Script Timeframe Parametreleri
         if timeframe_str == "1D":
             prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 50, 20, True, 10, 50
-        else: 
+        elif timeframe_str == "1W":
+            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 30, 40, True, 8, 70
+        elif timeframe_str == "1M":
+            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 20, 60, True, 6, 100
+        else: # 1H ve diğerleri
             prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 75, 15, False, 10, 40
 
         high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
         hlc3 = (high + low + close) / 3
         
+        # ATR ve Adaptif APT Hesaplaması
         tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
         atr2 = tr.rolling(window=atrLen2).mean()
         atrAvg2 = pine_rma(atr2, atrLen2)
         ratio2 = np.where(atrAvg2 > 0, atr2 / atrAvg2, 1.0)
         
-        aptRaw2 = np.where(useAdapt2, baseAPT2 / np.power(ratio2, volBias2), baseAPT2)
+        if useAdapt2:
+            aptRaw2 = baseAPT2 / np.power(np.maximum(ratio2, 0.001), volBias2)
+        else:
+            aptRaw2 = np.full(len(df), baseAPT2)
+            
         aptClamped2 = np.clip(aptRaw2, 5.0, 300.0)
         aptSeries2 = np.round(aptClamped2)
-        
         alphas = 1.0 - np.exp(-np.log(2.0) / np.maximum(1.0, aptSeries2))
 
         highest_bars = high.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmax(), raw=True)
         lowest_bars = low.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmin(), raw=True)
         
         vwap_vals = []
-        current_vwap_p = None
-        current_vwap_vol = None
+        current_vwap_p = np.nan
+        current_vwap_vol = np.nan
         dir2 = 1
         
         last_ph = np.nan
@@ -277,22 +286,27 @@ def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
                 last_pl = low.iloc[i]
                 last_pl_bar = i
                 
-            if not np.isnan(last_ph_bar) and not np.isnan(last_pl_bar) and last_ph_bar >= 0 and last_pl_bar >= 0:
+            if last_ph_bar != -1 and last_pl_bar != -1:
                 new_dir = 1 if last_pl_bar > last_ph_bar else -1
-                if new_dir != dir2:
-                    dir2 = new_dir
-                    x2 = last_pl_bar if dir2 > 0 else last_ph_bar
-                    y2 = last_pl if dir2 > 0 else last_ph
-                    barsback = max(0, i - int(x2))
-                    vol_at_anchor = volume.iloc[i - barsback] if (i - barsback) >= 0 else volume.iloc[i]
-                    current_vwap_p = y2 * vol_at_anchor
-                    current_vwap_vol = vol_at_anchor
+            else:
+                new_dir = dir2
+                
+            if new_dir != dir2:
+                dir2 = new_dir
+                x2 = last_pl_bar if dir2 > 0 else last_ph_bar
+                y2 = last_pl if dir2 > 0 else last_ph
+                barsback = max(0, i - int(x2))
+                anchor_idx = i - barsback
+                vol_at_anchor = volume.iloc[anchor_idx] if 0 <= anchor_idx < len(volume) else volume.iloc[i]
+                
+                current_vwap_p = y2 * vol_at_anchor if not np.isnan(y2) else hlc3.iloc[i] * volume.iloc[i]
+                current_vwap_vol = vol_at_anchor if not np.isnan(vol_at_anchor) else volume.iloc[i]
             
             alpha = alphas.iloc[i]
             pxv = hlc3.iloc[i] * volume.iloc[i]
             v0 = volume.iloc[i]
             
-            if current_vwap_p is None or np.isnan(current_vwap_p):
+            if np.isnan(current_vwap_p) or np.isnan(current_vwap_vol):
                 current_vwap_p = pxv
                 current_vwap_vol = v0
             else:
@@ -306,6 +320,7 @@ def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
         df['Trend'] = np.where(df['Close'] > df['VWAP2'], 'BULLISH', 'BEARISH')
         return df
     except Exception as e:
+        print(f"Auto VWAP2 Hesaplama Hatası: {e}")
         return None
 
 # ======================================================================
