@@ -193,135 +193,14 @@ def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, m
     mov40 = base.ewm(span=mov_mid, adjust=False).mean()
     mov160 = base.ewm(span=mov_long, adjust=False).mean()
 
-    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
-    blue_cross_50 = (mov40.iloc[-1] > 50 and mov40.iloc[-2] <= 50) or (mov40.iloc[-2] > 50 and mov40.iloc[-3] <= 50)
     bm_cross = (mov40.iloc[-1] > mov160.iloc[-1] and mov40.iloc[-2] <= mov160.iloc[-2]) or (mov40.iloc[-2] > mov160.iloc[-2] and mov40.iloc[-3] <= mov160.iloc[-3])
     near_50 = mov40.iloc[-1] >= 48 or mov40.iloc[-2] >= 48
     blue_cross_red_above_50 = bm_cross and near_50
 
     return {
         "base": base, "mov40": mov40, "mov160": mov160,
-        "yellow_cross_30": yellow_cross_30,
-        "blue_cross_50": blue_cross_50,
         "blue_cross_red_above_50": blue_cross_red_above_50
     }
-
-def calculate_rsi_signals(series_close: pd.Series):
-    rsi_val = calculate_rsi(series_close, 14)
-    sma_rsi = rsi_val.rolling(window=3).mean()
-    base = sma_rsi.ewm(span=2, adjust=False).mean()
-    mov5 = base.ewm(span=5, adjust=False).mean()
-    mov40 = base.ewm(span=40, adjust=False).mean()
-    mov160 = base.ewm(span=160, adjust=False).mean()
-
-    yellow_cross_green = (base.iloc[-1] > mov5.iloc[-1] and base.iloc[-2] <= mov5.iloc[-2]) or \
-                         (base.iloc[-2] > mov5.iloc[-2] and base.iloc[-3] <= mov5.iloc[-3])
-    
-    cond_red_near_50 = (mov160.iloc[-1] < 50) and (mov160.iloc[-1] >= 40)
-    cond_blue_below_red = mov40.iloc[-1] < mov160.iloc[-1]
-
-    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
-    yellow_bottom = (base.iloc[-1] <= 40) or (base.iloc[-2] <= 40)
-    dip_signal = (yellow_cross_30 or (yellow_cross_green and yellow_bottom)) and cond_red_near_50 and cond_blue_below_red
-
-    yellow_mid = (40 <= base.iloc[-1] <= 45) or (40 <= base.iloc[-2] <= 45)
-    orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
-    return dip_signal, orta_signal
-
-def calculate_auto_vwap2_pine_logic(df: pd.DataFrame, timeframe_str="1D"):
-    try:
-        if len(df) < 100: return None
-        df = df.copy()
-        
-        # Orijinal Pine Script Timeframe Parametreleri
-        if timeframe_str == "1D":
-            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 50, 20, True, 10, 50
-        elif timeframe_str == "1W":
-            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 30, 40, True, 8, 70
-        elif timeframe_str == "1M":
-            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 20, 60, True, 6, 100
-        else: # 1H ve diğerleri
-            prd2, baseAPT2, useAdapt2, volBias2, atrLen2 = 75, 15, False, 10, 40
-
-        high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
-        hlc3 = (high + low + close) / 3
-        
-        # ATR ve Adaptif APT Hesaplaması
-        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        atr2 = tr.rolling(window=atrLen2).mean()
-        atrAvg2 = pine_rma(atr2, atrLen2)
-        ratio2 = np.where(atrAvg2 > 0, atr2 / atrAvg2, 1.0)
-        
-        if useAdapt2:
-            aptRaw2 = baseAPT2 / np.power(np.maximum(ratio2, 0.001), volBias2)
-        else:
-            aptRaw2 = np.full(len(df), baseAPT2)
-            
-        aptClamped2 = np.clip(aptRaw2, 5.0, 300.0)
-        aptSeries2 = np.round(aptClamped2)
-        alphas = 1.0 - np.exp(-np.log(2.0) / np.maximum(1.0, aptSeries2))
-
-        highest_bars = high.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmax(), raw=True)
-        lowest_bars = low.rolling(window=prd2).apply(lambda x: len(x) - 1 - x.argmin(), raw=True)
-        
-        vwap_vals = []
-        current_vwap_p = np.nan
-        current_vwap_vol = np.nan
-        dir2 = 1
-        
-        last_ph = np.nan
-        prev_ph = np.nan
-        last_pl = np.nan
-        prev_pl = np.nan
-        last_ph_bar = -1
-        last_pl_bar = -1
-        
-        for i in range(len(df)):
-            if highest_bars.iloc[i] == 0:
-                prev_ph = last_ph
-                last_ph = high.iloc[i]
-                last_ph_bar = i
-            if lowest_bars.iloc[i] == 0:
-                prev_pl = last_pl
-                last_pl = low.iloc[i]
-                last_pl_bar = i
-                
-            if last_ph_bar != -1 and last_pl_bar != -1:
-                new_dir = 1 if last_pl_bar > last_ph_bar else -1
-            else:
-                new_dir = dir2
-                
-            if new_dir != dir2:
-                dir2 = new_dir
-                x2 = last_pl_bar if dir2 > 0 else last_ph_bar
-                y2 = last_pl if dir2 > 0 else last_ph
-                barsback = max(0, i - int(x2))
-                anchor_idx = i - barsback
-                vol_at_anchor = volume.iloc[anchor_idx] if 0 <= anchor_idx < len(volume) else volume.iloc[i]
-                
-                current_vwap_p = y2 * vol_at_anchor if not np.isnan(y2) else hlc3.iloc[i] * volume.iloc[i]
-                current_vwap_vol = vol_at_anchor if not np.isnan(vol_at_anchor) else volume.iloc[i]
-            
-            alpha = alphas.iloc[i]
-            pxv = hlc3.iloc[i] * volume.iloc[i]
-            v0 = volume.iloc[i]
-            
-            if np.isnan(current_vwap_p) or np.isnan(current_vwap_vol):
-                current_vwap_p = pxv
-                current_vwap_vol = v0
-            else:
-                current_vwap_p = (1 - alpha) * current_vwap_p + alpha * pxv
-                current_vwap_vol = (1 - alpha) * current_vwap_vol + alpha * v0
-                
-            vap = current_vwap_p / current_vwap_vol if current_vwap_vol > 0 else np.nan
-            vwap_vals.append(vap)
-            
-        df['VWAP2'] = vwap_vals
-        df['Trend'] = np.where(df['Close'] > df['VWAP2'], 'BULLISH', 'BEARISH')
-        return df
-    except Exception as e:
-        print(f"Auto VWAP2 Hesaplama Hatası: {e}")
-        return None
 
 # ======================================================================
 # 🚀 ANA TARAMA MOTORU
@@ -330,16 +209,14 @@ def run_targeted_screener():
     print(f"🚀 Seçilen Strateji Çalıştırılıyor: {SELECTED_STRATEGY}")
     telegram_gonder(f"🎯 Tarama Başlatıldı. Mod: <b>{SELECTED_STRATEGY}</b>")
     
-    s1_uzun_ralli, s2_base_30, s3_matrix_wm, s4_uclu_kesisim = [], [], [], []
-    s5_leda_d, s6_leda_w, s7_hu_d, s8_mav_w, s9_hassas_dip_orta = [], [], [], [], []
-    s10_vwap_1d, s10_vwap_1h = [], []
+    s1_uzun_ralli, s4_uclu_kesisim = [], []
+    s5_leda_d, s6_leda_w, s7_hu_d, s8_mav_w = [], [], [], []
 
     for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
         batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
         try:
             data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
             data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
-            data_1h = yf.download(batch, interval="1h", period="60d", progress=False, group_by='ticker', auto_adjust=True, threads=False)
             
             for full_ticker in batch:
                 ticker = full_ticker.replace('.IS', '')
@@ -350,29 +227,12 @@ def run_targeted_screener():
                 
                 try: df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
                 except: df_w = pd.DataFrame()
-
-                try: df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
-                except: df_h = pd.DataFrame()
                 
                 # 1. Uzun Vade Ralli
                 if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"] and not df_d.empty and len(df_d) >= 180:
                     res = calculate_rsi_most_matrix(df_d['Close'])
                     if res["blue_cross_red_above_50"]: 
                         s1_uzun_ralli.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_d['Close'].iloc[-1]:.2f}₺)")
-                        
-                # 2. Base 30
-                if SELECTED_STRATEGY in ["Hepsi", "Base 30 Kesisişi"] and not df_d.empty and len(df_d) >= 30:
-                    b_res = calculate_rsi_most_matrix(df_d['Close'])
-                    if b_res["yellow_cross_30"]: 
-                        s2_base_30.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Günlük) - {df_d['Close'].iloc[-1]:.2f}₺")
-                        
-                # 3. Matrix Orta Hat
-                if SELECTED_STRATEGY in ["Hepsi", "Matrix Orta Hat"] and not df_d.empty and len(df_d) >= 100:
-                    df_w_res = df_d.resample('W').agg({'Close': 'last'}).dropna()
-                    if len(df_w_res) >= 50:
-                        m_res = calculate_rsi_most_matrix(df_w_res['Close'])
-                        if (m_res["mov40"].iloc[-1] > 50 and m_res["mov40"].iloc[-2] <= 50):
-                            s3_matrix_wm.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (Haftalık) - {df_d['Close'].iloc[-1]:.2f}₺")
                         
                 # 4. Üçlü Kesişim
                 if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]:
@@ -400,26 +260,6 @@ def run_targeted_screener():
                 # 8. Mavilim Haftalık
                 if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"] and not df_w.empty and check_mavilim_signal(df_w) and check_macd_cross(df_w):
                     s8_mav_w.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> - {df_w['Close'].iloc[-1]:.2f}₺")
-                    
-                # 9. Hassas Dip Orta
-                if SELECTED_STRATEGY in ["Hepsi", "Hassas Dip Orta"] and not df_d.empty and len(df_d) >= 180:
-                    dip, orta = calculate_rsi_signals(df_d['Close'])
-                    if dip: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (DİP) - {df_d['Close'].iloc[-1]:.2f}₺")
-                    if orta: s9_hassas_dip_orta.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> (ORTA) - {df_d['Close'].iloc[-1]:.2f}₺")
-
-                # 10. Auto VWAP2 (GÜNLÜK)
-                if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_d.empty and len(df_d) >= 100:
-                    df_v_1d = calculate_auto_vwap2_pine_logic(df_d, "1D")
-                    if df_v_1d is not None and len(df_v_1d) >= 2:
-                        if df_v_1d['Trend'].iloc[-1] != df_v_1d['Trend'].iloc[-2]:
-                            s10_vwap_1d.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1d['Trend'].iloc[-1]}) - {df_d['Close'].iloc[-1]:.2f}₺")
-
-                # 10. Auto VWAP2 (SAATLİK)
-                if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"] and not df_h.empty and len(df_h) >= 100:
-                    df_v_1h = calculate_auto_vwap2_pine_logic(df_h, "1H")
-                    if df_v_1h is not None and len(df_v_1h) >= 2:
-                        if df_v_1h['Trend'].iloc[-1] != df_v_1h['Trend'].iloc[-2]:
-                            s10_vwap_1h.append(f"• <a href='{tv_link}'><b>{ticker}</b></a> ({df_v_1h['Trend'].iloc[-1]}) - {df_h['Close'].iloc[-1]:.2f}₺")
 
         except Exception as e:
             print(f"Batch Hatası: {e}")
@@ -434,17 +274,11 @@ def run_targeted_screener():
             telegram_gonder(f"ℹ️ <b>{title}</b>\n--------------------------------------\n❌ Bu taramada koşulu sağlayan hisse yok.")
 
     if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"]: report("💎 1. UZUN VADELİ RALLİ TARAMASI", s1_uzun_ralli)
-    if SELECTED_STRATEGY in ["Hepsi", "Base 30 Kesisişi"]: report("🟡 2. RSI-MOST BASE 30 KESİŞİMİ", s2_base_30)
-    if SELECTED_STRATEGY in ["Hepsi", "Matrix Orta Hat"]: report("📅 3. MATRIX ORTA HAT (50) KESİŞİMİ", s3_matrix_wm)
     if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]: report("💥 4. ÜÇLÜ KESİŞİM STRATEJİSİ", s4_uclu_kesisim)
     if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"]: report("📈 5. LEDA GÜNLÜK + MACD", s5_leda_d)
     if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]: report("📈 6. LEDA HAFTALIK + MACD", s6_leda_w)
     if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"]: report("💎 7. HU GÜNLÜK + MACD", s7_hu_d)
     if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: report("🌊 8. MAVİLİM HAFTALIK + MACD", s8_mav_w)
-    if SELECTED_STRATEGY in ["Hepsi", "Hassas Dip Orta"]: report("🎯 9. HASSAS DİP VE ORTA BANT TARAMASI", s9_hassas_dip_orta)
-    if SELECTED_STRATEGY in ["Hepsi", "Auto VWAP2"]: 
-        report("🔵 10. AUTO VWAP2 TREND DEĞİŞİKLİĞİ (GÜNLÜK)", s10_vwap_1d)
-        report("🔵 10. AUTO VWAP2 TREND DEĞİŞİKLİĞİ (SAATLİK)", s10_vwap_1h)
 
 if __name__ == "__main__":
     run_targeted_screener()
