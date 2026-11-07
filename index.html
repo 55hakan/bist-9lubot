@@ -13,6 +13,7 @@
             --text-white: #ffffff;
             --text-muted: #8b949e;
             --accent-green: #238636;
+            --accent-green-hover: #2ea043;
             --accent-blue: #58a6ff;
             --accent-gold: #f1e05a;
             --border-color: #30363d;
@@ -35,18 +36,18 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             padding: 2px 4px;
         }
 
-        /* Üst Canlı Bant - Tam Genişlik ve Optimize Yükseklik */
+        /* Üst Canlı Bant */
         .tradingview-ticker {
-            width: 100%;
-            height: 35px;
+            width: 200%;
+            height: 60px;
             overflow: hidden;
             border-bottom: 1px solid var(--border-color);
             background-color: #161b22;
-            border-radius: 4px;
+            border-radius: 6px;
+            margin-bottom: 2px;
         }
 
         .container {
@@ -55,39 +56,46 @@
             flex-direction: column;
             gap: 2px;
             flex: 1;
-            justify-content: space-between;
         }
 
-        /* Header - Boşluklar Azaltıldı */
+        /* Profesyonel & Dikkat Çekici Header */
         header {
             text-align: center;
+            padding: 1px 0;
+            margin-bottom: 1px;
         }
 
         .logo-title {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: var(--text-white);
+            font-size: 1.15rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #58a6ff 0%, #3fb950 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 5px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
         }
 
         .logo-title i {
-            color: var(--accent-blue);
+            -webkit-text-fill-color: #58a6ff;
         }
 
         .telegram-badge {
             display: inline-flex;
             align-items: center;
-            gap: 3px;
-            background-color: #229ED9;
+            gap: 4px;
+            background: linear-gradient(135deg, #229ED9 0%, #1c8adb 100%);
             color: white;
             text-decoration: none;
             padding: 1px 8px;
-            border-radius: 10px;
-            font-size: 0.6rem;
-            font-weight: 600;
+            border-radius: 12px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(34, 158, 217, 0.3);
         }
 
         /* Market Summary Bar */
@@ -116,7 +124,7 @@
         .main-action-card {
             background: linear-gradient(135deg, #1f6feb 0%, #114b9f 100%);
             border-radius: 4px;
-            padding: 4px 8px;
+            padding: 3px 8px;
             color: white;
             display: flex;
             justify-content: space-between;
@@ -145,9 +153,10 @@
             gap: 4px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 1px;
+            margin-top: 1px;
         }
 
-        /* Strategy Cards - 2'Lİ YAN YANA ULTRA KOMPAKT */
+        /* Strategy Cards - 2'Lİ YAN YANA ULTRA KOMPAKT SIKIŞTIRILMIŞ */
         .strategy-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -212,14 +221,15 @@
             width: 100%;
         }
 
-        /* Teknik Gösterge - Ekrana Tam Sığacak Şekilde Küçültüldü */
+        /* Teknik Gösterge - Ekranın Altına Tam Oturan Alan */
         .chart-section {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            padding: 2px;
-            height: 95px;
+            padding: 1px;
+            height: 140px;
             overflow: hidden;
+            margin-top: 1px;
         }
 
         /* Footer */
@@ -227,20 +237,21 @@
             text-align: center;
             font-size: 0.52rem;
             color: var(--text-muted);
+            padding: 1px 0;
         }
     </style>
 </head>
 <body>
 
-    <!-- CANLI BIST & DÖVİZ & ALTIN BANDI (GÜNCELLENMİŞ SEMBOLLER) -->
+    <!-- CANLI BIST & DÖVİZ & ALTIN BANDI -->
     <div class="tradingview-ticker">
         <div class="tradingview-widget-container" style="height:100%;width:100%;">
             <div class="tradingview-widget-container__widget" style="height:100%;width:100%;"></div>
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
             {
             "symbols": [
-                { "proName": "BIST:XU100", "title": "BIST 100" },
-                { "proName": "BIST:XU030", "title": "BIST 30" },
+                { "proName": "XU100", "title": "BIST 100" },
+                { "proName": "XU030", "title": "BIST 30" },
                 { "description": "USD/TRY", "proName": "FX_IDC:USDTRY" },
                 { "description": "EUR/TRY", "proName": "FX_IDC:EURTRY" },
                 { "description": "Gram Altın", "proName": "TVC:GOLD" }
@@ -362,7 +373,7 @@
             </div>
         </div>
 
-        <!-- BIST 100 TEKNİK GÖSTERGE (Ekrana Tam Sığacak Boyut) -->
+        <!-- BIST 100 TEKNİK GÖSTERGE -->
         <div class="chart-section">
             <div class="tradingview-widget-container" style="height:100%;width:100%;">
                 <div class="tradingview-widget-container__widget" style="height:100%;width:100%;"></div>
@@ -370,9 +381,9 @@
                 {
                 "interval": "1D",
                 "width": "100%",
-                "height": "90",
+                "height": "135",
                 "isTransparent": true,
-                "symbol": "BIST:XU100",
+                "symbol": "XU100",
                 "showIntervalTabs": false,
                 "displayMode": "single",
                 "locale": "tr",
