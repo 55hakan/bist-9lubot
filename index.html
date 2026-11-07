@@ -32,7 +32,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             padding-bottom: 40px;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         /* Ticker Tape Styling */
@@ -40,30 +40,30 @@
             width: 100%;
             background-color: #161b22;
             border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 0 15px;
+            padding: 0 12px;
         }
 
         /* Header */
         header {
             text-align: center;
-            margin-bottom: 25px;
-            padding-top: 10px;
+            margin-bottom: 15px;
+            padding-top: 5px;
         }
 
         .logo-title {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: var(--text-white);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             letter-spacing: -0.5px;
         }
 
@@ -72,23 +72,23 @@
         }
 
         .subtitle {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            margin-top: 5px;
+            margin-top: 3px;
         }
 
         .telegram-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             background-color: #229ED9;
             color: white;
             text-decoration: none;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            margin-top: 15px;
+            margin-top: 10px;
             transition: transform 0.2s, opacity 0.2s;
         }
 
@@ -101,31 +101,31 @@
         .market-status-bar {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 25px;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
         }
 
         .market-info-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
+            gap: 6px;
+            font-size: 0.8rem;
         }
 
         .status-tag {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
             font-weight: bold;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
         }
 
         .status-open {
@@ -143,72 +143,74 @@
         /* Action All Button */
         .main-action-card {
             background: linear-gradient(135deg, #1f6feb 0%, #114b9f 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 15px rgba(31, 111, 235, 0.2);
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.2);
         }
 
         .main-action-info h2 {
-            font-size: 1.2rem;
-            margin-bottom: 4px;
+            font-size: 1.05rem;
+            margin-bottom: 2px;
         }
 
         .main-action-info p {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             opacity: 0.9;
         }
 
         .btn-large {
             background-color: #ffffff;
             color: #0d1117;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 9px 16px;
+            border-radius: 6px;
             font-weight: bold;
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            gap: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
         .btn-large:hover {
             background-color: #f0f6fc;
-            transform: scale(1.03);
+            transform: scale(1.02);
         }
 
         /* Section Title */
         .section-title {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             color: var(--text-white);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
 
-        /* Strategy Cards */
+        /* Strategy Cards - YAN YANA 2'Lİ GRID YAPI */
         .strategy-grid {
             display: grid;
-            gap: 12px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 16px 20px;
+            border-radius: 8px;
+            padding: 10px 12px;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
             transition: background-color 0.2s, border-color 0.2s;
         }
 
@@ -219,89 +221,88 @@
 
         .info {
             flex: 1;
+            margin-bottom: 8px;
         }
 
         .info-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
+            justify-content: space-between;
+            margin-bottom: 3px;
         }
 
         .strategy-number {
             background-color: var(--badge-bg);
             color: var(--accent-blue);
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: bold;
-            padding: 2px 8px;
-            border-radius: 6px;
+            padding: 1px 5px;
+            border-radius: 4px;
             border: 1px solid var(--border-color);
         }
 
         .info h3 {
             margin: 0;
-            font-size: 1rem;
+            font-size: 0.85rem;
             color: var(--text-white);
+            line-height: 1.2;
         }
 
         .info p {
             margin: 0;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .btn {
             background-color: var(--accent-green);
             color: white;
             border: none;
-            padding: 9px 16px;
-            border-radius: 6px;
+            padding: 6px 10px;
+            border-radius: 5px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-decoration: none;
             transition: background-color 0.2s, transform 0.1s;
-            white-space: nowrap;
-            display: inline-flex;
+            text-align: center;
+            display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
         }
 
         .btn:hover {
             background-color: var(--accent-green-hover);
-            transform: translateY(-1px);
         }
 
         /* Widget Container Section */
         .chart-section {
-            margin-top: 30px;
+            margin-top: 20px;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
+            border-radius: 10px;
+            padding: 12px;
         }
 
         /* Footer */
         footer {
             text-align: center;
-            margin-top: 35px;
-            font-size: 0.8rem;
+            margin-top: 25px;
+            font-size: 0.75rem;
             color: var(--text-muted);
         }
 
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .main-action-card {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
+        /* Çok küçük ekranlarda (örneğin eski telefonlar) tek sütuna düşmesi için özel güvenlik */
+        @media (max-width: 400px) {
+            .strategy-grid {
+                grid-template-columns: 1fr;
             }
-            .card {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -348,7 +349,7 @@
                 <span id="live-clock">--:--:--</span>
             </div>
             <div class="market-info-item">
-                <span>BIST Seans Durumu:</span>
+                <span>BIST:</span>
                 <span id="market-badge" class="status-tag status-closed">
                     <i class="fa-solid fa-circle-dot"></i> KAPALI
                 </span>
@@ -359,16 +360,16 @@
         <div class="main-action-card">
             <div class="main-action-info">
                 <h2>🚀 Tüm Stratejileri Çalıştır</h2>
-                <p>Aktif 6 strateji için BIST hisselerini tara ve Telegram'a kart at.</p>
+                <p>6 stratejiyi tara, Telegram'a bülten kartı at.</p>
             </div>
             <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn-large">
-                <i class="fa-solid fa-play"></i> Şimdi Tara
+                <i class="fa-solid fa-play"></i> Tara
             </a>
         </div>
 
-        <!-- STRATEJİ LİSTESİ -->
+        <!-- STRATEJİ LİSTESİ (2'Lİ YAN YANA GRID) -->
         <div class="section-title">
-            <i class="fa-solid fa-layer-group" style="color: var(--accent-blue);"></i> Aktif Tarama Stratejileri (6 Adet)
+            <i class="fa-solid fa-layer-group" style="color: var(--accent-blue);"></i> Aktif Stratejiler (6 Adet)
         </div>
 
         <div class="strategy-grid">
@@ -376,13 +377,13 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <span class="strategy-number">STRATEJİ 1</span>
-                        <h3>💎 1. Rallİ Başlangıç Taraması</h3>
+                        <h3>💎 1. Rallİ</h3>
+                        <span class="strategy-number">STR 1</span>
                     </div>
-                    <p>RSI-MOST Matrix Blue Cross & 50 Üstü Güçlü Ralliler (180+ Bar)</p>
+                    <p>RSI-MOST Matrix Blue Cross (180+ Bar)</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
-                    <i class="fa-solid fa-bolt"></i> Tara
+                    <i class="fa-solid fa-bolt"></i> Çalıştır
                 </a>
             </div>
 
@@ -390,13 +391,13 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <span class="strategy-number">STRATEJİ 2</span>
-                        <h3>💥 2. Üçlü Kesişim Stratejisi</h3>
+                        <h3>💥 2. Üçlü</h3>
+                        <span class="strategy-number">STR 2</span>
                     </div>
-                    <p>Leda Buy + Mavilim34 + WMA79 Üçlü Confluence Trend Girişi</p>
+                    <p>Leda + Mavilim34 + WMA79 Confluence</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
-                    <i class="fa-solid fa-bolt"></i> Tara
+                    <i class="fa-solid fa-bolt"></i> Çalıştır
                 </a>
             </div>
 
@@ -404,13 +405,13 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <span class="strategy-number">STRATEJİ 3</span>
-                        <h3>📈 3. Özel Günlük + MACD</h3>
+                        <h3>📈 3. Günlük</h3>
+                        <span class="strategy-number">STR 3</span>
                     </div>
-                    <p>Günlük Leda Sinyali + MACD Pozitif Kesişim Teyidi</p>
+                    <p>Günlük Leda + MACD Pozitif Kesişim</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
-                    <i class="fa-solid fa-bolt"></i> Tara
+                    <i class="fa-solid fa-bolt"></i> Çalıştır
                 </a>
             </div>
 
@@ -418,13 +419,13 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <span class="strategy-number">STRATEJİ 4</span>
-                        <h3>📈 4. Özel Haftalık + MACD</h3>
+                        <h3>📈 4. Haftalık</h3>
+                        <span class="strategy-number">STR 4</span>
                     </div>
-                    <p>Haftalık Leda Sinyali + MACD Orta/Uzun Vadeli Trend</p>
+                    <p>Haftalık Leda + MACD Trend Teyidi</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
-                    <i class="fa-solid fa-bolt"></i> Tara
+                    <i class="fa-solid fa-bolt"></i> Çalıştır
                 </a>
             </div>
 
@@ -432,13 +433,13 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <span class="strategy-number">STRATEJİ 5</span>
-                        <h3>💎 5. HU Günlük + MACD</h3>
+                        <h3>💎 5. HU Gün</h3>
+                        <span class="strategy-number">STR 5</span>
                     </div>
-                    <p>Hull/WMA 200-400 Çizgi Kesişimi + MACD Teyidi</p>
+                    <p>Hull/WMA 200-400 Çizgi Kesişimi</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
-                    <i class="fa-solid fa-bolt"></i> Tara
+                    <i class="fa-solid fa-bolt"></i> Çalıştır
                 </a>
             </div>
 
@@ -446,13 +447,13 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <span class="strategy-number">STRATEJİ 6</span>
-                        <h3>🌊 6. Mavilim Haftalık + MACD</h3>
+                        <h3>🌊 6. Mavilim</h3>
+                        <span class="strategy-number">STR 6</span>
                     </div>
-                    <p>Haftalık Mavilim WMA Zincir Kesişimi + MACD Al Sinyali</p>
+                    <p>Haftalık Mavilim WMA Zincir + MACD</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
-                    <i class="fa-solid fa-bolt"></i> Tara
+                    <i class="fa-solid fa-bolt"></i> Çalıştır
                 </a>
             </div>
         </div>
@@ -460,7 +461,7 @@
         <!-- BIST 100 TRADINGVIEW TEKNİK GÖSTERGE -->
         <div class="chart-section">
             <div class="section-title">
-                <i class="fa-solid fa-gauge-high" style="color: var(--accent-gold);"></i> BIST 100 Canlı Teknik Analiz Göstergesi
+                <i class="fa-solid fa-gauge-high" style="color: var(--accent-gold);"></i> BIST 100 Teknik Gösterge
             </div>
             <div class="tradingview-widget-container">
                 <div class="tradingview-widget-container__widget"></div>
@@ -469,7 +470,7 @@
                 "interval": "1D",
                 "width": "100%",
                 "isTransparent": true,
-                "height": 400,
+                "height": 350,
                 "symbol": "BIST:XU100",
                 "showIntervalTabs": true,
                 "displayMode": "single",
@@ -482,8 +483,7 @@
 
         <!-- FOOTER -->
         <footer>
-            <p>© 2026 EMEKLİ MASTER PRO - BIST Otomatik Tarama Botu</p>
-            <p style="margin-top: 5px; opacity: 0.7;">Sinyaller otomatik algoritma tarafından üretilir. Yatırım Tavsiyesi Değildir.</p>
+            <p>© 2026 EMEKLİ MASTER PRO</p>
         </footer>
     </div>
 
@@ -495,19 +495,18 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
             
-            document.getElementById('live-clock').innerText = `${hours}:${minutes}:${seconds} (TSI)`;
+            document.getElementById('live-clock').innerText = `${hours}:${minutes}:${seconds}`;
 
             const day = now.getDay();
             const timeInMinutes = now.getHours() * 60 + now.getMinutes();
 
-            // Hafta içi (Pazartesi=1 ... Cuma=5) ve 09:55 - 18:10 arası seans açık
             const isWeekday = (day >= 1 && day <= 5);
             const isSessionOpen = (timeInMinutes >= 595 && timeInMinutes <= 1090);
 
             const badge = document.getElementById('market-badge');
             if (isWeekday && isSessionOpen) {
                 badge.className = "status-tag status-open";
-                badge.innerHTML = '<i class="fa-solid fa-circle-dot"></i> SEANS AÇIK';
+                badge.innerHTML = '<i class="fa-solid fa-circle-dot"></i> AÇIK';
             } else {
                 badge.className = "status-tag status-closed";
                 badge.innerHTML = '<i class="fa-solid fa-circle-dot"></i> KAPALI';
