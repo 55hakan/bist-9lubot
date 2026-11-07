@@ -32,44 +32,28 @@
             color: var(--text-color);
             width: 100vw;
             height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 4px 6px;
+            padding: 3px 6px;
         }
 
-        /* Canlı Piyasalar Bant Alanı */
-        .market-ticker-tape {
-            background-color: #161b22;
-            border: 1px solid var(--border-color);
+        /* Genişletilmiş Canlı Şerit Bant Alanı */
+        .tradingview-ticker {
+            width: 100%;
+            height: 40px;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border-color);
             border-radius: 6px;
-            padding: 5px 8px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            font-size: 0.68rem;
-            white-space: nowrap;
-            overflow-x: auto;
-            gap: 15px;
-        }
-
-        .ticker-item {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-
-        .ticker-item span {
-            font-weight: bold;
-            color: var(--text-white);
+            background-color: #161b22;
         }
 
         .container {
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 3px;
             flex: 1;
             justify-content: space-between;
         }
@@ -80,7 +64,7 @@
         }
 
         .logo-title {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--text-white);
             display: flex;
@@ -100,29 +84,29 @@
             background-color: #229ED9;
             color: white;
             text-decoration: none;
-            padding: 2px 10px;
+            padding: 1px 10px;
             border-radius: 12px;
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             font-weight: 600;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         /* Market Summary Bar */
         .market-status-bar {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 4px 8px;
+            border-radius: 5px;
+            padding: 3px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
         }
 
         .status-tag {
             padding: 1px 5px;
-            border-radius: 6px;
-            font-size: 0.6rem;
+            border-radius: 5px;
+            font-size: 0.58rem;
             font-weight: bold;
         }
 
@@ -132,51 +116,50 @@
         /* Action All Button */
         .main-action-card {
             background: linear-gradient(135deg, #1f6feb 0%, #114b9f 100%);
-            border-radius: 6px;
-            padding: 6px 10px;
+            border-radius: 5px;
+            padding: 5px 10px;
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .main-action-info h2 { font-size: 0.85rem; margin-bottom: 0; }
-        .main-action-info p { font-size: 0.62rem; opacity: 0.9; }
+        .main-action-info h2 { font-size: 0.8rem; margin-bottom: 0; }
+        .main-action-info p { font-size: 0.58rem; opacity: 0.9; }
 
         .btn-large {
             background-color: #ffffff;
             color: #0d1117;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 4px;
             font-weight: bold;
             text-decoration: none;
-            font-size: 0.72rem;
+            font-size: 0.68rem;
         }
 
         /* Section Title */
         .section-title {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: var(--text-white);
             display: flex;
             align-items: center;
             gap: 5px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 2px;
-            margin-top: 2px;
         }
 
         /* Strategy Cards - 2'Lİ YAN YANA ULTRA KOMPAKT */
         .strategy-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 4px;
+            gap: 3px;
         }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 5px;
-            padding: 5px 6px;
+            padding: 4px 6px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -191,7 +174,7 @@
         .strategy-number {
             background-color: var(--badge-bg);
             color: var(--accent-blue);
-            font-size: 0.55rem;
+            font-size: 0.52rem;
             font-weight: bold;
             padding: 1px 3px;
             border-radius: 3px;
@@ -200,7 +183,7 @@
 
         .info h3 {
             margin: 0;
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             color: var(--text-white);
             white-space: nowrap;
             overflow: hidden;
@@ -208,8 +191,8 @@
         }
 
         .info p {
-            margin: 1px 0 3px 0;
-            font-size: 0.58rem;
+            margin: 1px 0 2px 0;
+            font-size: 0.55rem;
             color: var(--text-muted);
             white-space: nowrap;
             overflow: hidden;
@@ -220,41 +203,57 @@
             background-color: var(--accent-green);
             color: white;
             border: none;
-            padding: 3px;
+            padding: 2px;
             border-radius: 3px;
             font-weight: 600;
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             text-decoration: none;
             text-align: center;
             display: block;
             width: 100%;
         }
 
-        /* Widget Container Section */
+        /* Widget Container Section - Tam Sığacak Şekilde Optimize Edildi */
         .chart-section {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 4px;
+            border-radius: 5px;
+            padding: 2px;
+            height: 125px;
+            overflow: hidden;
         }
 
         /* Footer */
         footer {
             text-align: center;
-            font-size: 0.6rem;
+            font-size: 0.58rem;
             color: var(--text-muted);
         }
     </style>
 </head>
 <body>
 
-    <!-- YENİNESİL CANLI PİYASA & DÖVİZ BANDI (Garanti Çalışır) -->
-    <div class="market-ticker-tape">
-        <div class="ticker-item">BIST 100: <span id="price-xu100">Yükleniyor...</span></div>
-        <div class="ticker-item">BIST 30: <span id="price-xu030">Yükleniyor...</span></div>
-        <div class="ticker-item">USD/TRY: <span id="price-usd">Yükleniyor...</span></div>
-        <div class="ticker-item">EUR/TRY: <span id="price-eur">Yükleniyor...</span></div>
-        <div class="ticker-item">G.Altın: <span id="price-gold">Yükleniyor...</span></div>
+    <!-- CANLI BIST & DÖVİZ & ALTIN BANDI -->
+    <div class="tradingview-ticker">
+        <div class="tradingview-widget-container" style="height:100%;width:100%;">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%;"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+            {
+            "symbols": [
+                { "proName": "BIST:XU100", "title": "BIST 100" },
+                { "proName": "BIST:XU030", "title": "BIST 30" },
+                { "description": "USD/TRY", "proName": "FX_IDC:USDTRY" },
+                { "description": "EUR/TRY", "proName": "FX_IDC:EURTRY" },
+                { "description": "Gram Altın", "proName": "FX_IDC:GAUTRY" }
+            ],
+            "showSymbolLogo": true,
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "displayMode": "adaptive",
+            "locale": "tr"
+            }
+            </script>
+        </div>
     </div>
 
     <div class="container">
@@ -364,16 +363,16 @@
             </div>
         </div>
 
-        <!-- BIST 100 TEKNİK GÖSTERGE -->
+        <!-- BIST 100 TEKNİK GÖSTERGE (TAM OTURAN BOYUT) -->
         <div class="chart-section">
-            <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-container" style="height:100%;width:100%;">
+                <div class="tradingview-widget-container__widget" style="height:100%;width:100%;"></div>
                 <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
                 {
                 "interval": "1D",
                 "width": "100%",
+                "height": "110",
                 "isTransparent": true,
-                "height": 115,
                 "symbol": "BIST:XU100",
                 "showIntervalTabs": false,
                 "displayMode": "single",
@@ -390,7 +389,7 @@
         </footer>
     </div>
 
-    <!-- SAAT VE CANLI FİYAT SCRIPT -->
+    <!-- SAAT SCRIPT -->
     <script>
         function updateMarketClock() {
             const now = new Date();
@@ -415,23 +414,6 @@
         }
         setInterval(updateMarketClock, 1000);
         updateMarketClock();
-
-        // Üst bant için TradingView Mini Sembol Alıntı (Mini Symbol Overview) entegrasyonu
-        // Not: Alternatif olarak TradingView mini quote widget'ı eklenebilir veya temel veriler çekilebilir.
-    </script>
-    <!-- TradingView Mini Widget Entegrasyonu ile Canlı Fiyatlar -->
-    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-    {
-    "symbol": "BIST:XU100",
-    "width": "100%",
-    "height": "32",
-    "locale": "tr",
-    "dateRange": "1D",
-    "colorTheme": "dark",
-    "isTransparent": true,
-    "autosize": true,
-    "largeChartUrl": ""
-    }
     </script>
 </body>
 </html>
