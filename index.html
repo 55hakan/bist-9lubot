@@ -2,8 +2,8 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMEKLİ PRO | BIST Akıllı Tarama & Sinyal Paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EMEKLİ PRO | BIST Akıllı Sinyal Paneli</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -25,46 +25,49 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            padding-bottom: 40px;
-            line-height: 1.4;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            overflow-x: hidden;
+            line-height: 1.35;
         }
 
         /* Ticker Tape Styling */
         .tradingview-widget-container {
-            width: 100%;
+            width: 100% !important;
             background-color: #161b22;
             border-bottom: 1px solid var(--border-color);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .container {
-            max-width: 800px;
+            width: 100%;
+            padding: 0 8px;
             margin: 0 auto;
-            padding: 0 12px;
         }
 
         /* Header */
         header {
             text-align: center;
-            margin-bottom: 15px;
-            padding-top: 5px;
+            margin-bottom: 12px;
+            padding-top: 2px;
         }
 
         .logo-title {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 800;
             color: var(--text-white);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            letter-spacing: -0.5px;
+            gap: 6px;
         }
 
         .logo-title i {
@@ -72,60 +75,52 @@
         }
 
         .subtitle {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
-            margin-top: 3px;
+            margin-top: 2px;
         }
 
         .telegram-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             background-color: #229ED9;
             color: white;
             text-decoration: none;
-            padding: 6px 12px;
-            border-radius: 20px;
+            padding: 5px 12px;
+            border-radius: 15px;
             font-size: 0.75rem;
             font-weight: 600;
-            margin-top: 10px;
-            transition: transform 0.2s, opacity 0.2s;
-        }
-
-        .telegram-badge:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
+            margin-top: 8px;
         }
 
         /* Market Summary Bar */
         .market-status-bar {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px 14px;
-            margin-bottom: 15px;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
         }
 
         .market-info-item {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.8rem;
+            gap: 5px;
+            font-size: 0.75rem;
         }
 
         .status-tag {
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.65rem;
             font-weight: bold;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
 
         .status-open {
@@ -143,166 +138,147 @@
         /* Action All Button */
         .main-action-card {
             background: linear-gradient(135deg, #1f6feb 0%, #114b9f 100%);
-            border-radius: 10px;
-            padding: 14px 16px;
-            margin-bottom: 18px;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.2);
         }
 
         .main-action-info h2 {
-            font-size: 1.05rem;
-            margin-bottom: 2px;
+            font-size: 0.95rem;
+            margin-bottom: 1px;
         }
 
         .main-action-info p {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             opacity: 0.9;
         }
 
         .btn-large {
             background-color: #ffffff;
             color: #0d1117;
-            padding: 9px 16px;
+            padding: 8px 12px;
             border-radius: 6px;
             font-weight: bold;
             text-decoration: none;
-            font-size: 0.85rem;
-            transition: all 0.2s;
+            font-size: 0.8rem;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        }
-
-        .btn-large:hover {
-            background-color: #f0f6fc;
-            transform: scale(1.02);
+            gap: 5px;
+            white-space: nowrap;
         }
 
         /* Section Title */
         .section-title {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: var(--text-white);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             gap: 6px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 6px;
+            padding-bottom: 4px;
         }
 
-        /* Strategy Cards - YAN YANA 2'Lİ GRID YAPI */
+        /* Strategy Cards - YAN YANA 2'Lİ KOMPAKT GRID (ANDROID MOBİL UYUMLU) */
         .strategy-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 6px;
+            margin-bottom: 15px;
         }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 12px;
+            border-radius: 6px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-
-        .card:hover {
-            background-color: var(--card-hover);
-            border-color: #444c56;
         }
 
         .info {
             flex: 1;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .info-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
 
         .strategy-number {
             background-color: var(--badge-bg);
             color: var(--accent-blue);
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: bold;
-            padding: 1px 5px;
-            border-radius: 4px;
+            padding: 1px 4px;
+            border-radius: 3px;
             border: 1px solid var(--border-color);
         }
 
         .info h3 {
             margin: 0;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             color: var(--text-white);
-            line-height: 1.2;
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 105px;
         }
 
         .info p {
             margin: 0;
-            font-size: 0.7rem;
+            font-size: 0.64rem;
             color: var(--text-muted);
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            height: 2.2em;
         }
 
         .btn {
             background-color: var(--accent-green);
             color: white;
             border: none;
-            padding: 6px 10px;
-            border-radius: 5px;
+            padding: 6px 4px;
+            border-radius: 4px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             text-decoration: none;
-            transition: background-color 0.2s, transform 0.1s;
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 3px;
             width: 100%;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-green-hover);
         }
 
         /* Widget Container Section */
         .chart-section {
-            margin-top: 20px;
+            margin-top: 10px;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px;
+            border-radius: 8px;
+            padding: 8px;
         }
 
         /* Footer */
         footer {
             text-align: center;
-            margin-top: 25px;
-            font-size: 0.75rem;
+            margin-top: 15px;
+            font-size: 0.7rem;
             color: var(--text-muted);
-        }
-
-        /* Çok küçük ekranlarda (örneğin eski telefonlar) tek sütuna düşmesi için özel güvenlik */
-        @media (max-width: 400px) {
-            .strategy-grid {
-                grid-template-columns: 1fr;
-            }
+            padding-bottom: 10px;
         }
     </style>
 </head>
@@ -335,10 +311,10 @@
             <div class="logo-title">
                 <i class="fa-solid fa-chart-line"></i> EMEKLİ MASTER PRO
             </div>
-            <div class="subtitle">Borsa İstanbul Akıllı Sinyal & Otomatik Tarama Paneli</div>
+            <div class="subtitle">Borsa İstanbul Akıllı Sinyal Paneli</div>
             
             <a href="https://t.me/+444tTFXl4Vg3Njg0" target="_blank" class="telegram-badge">
-                <i class="fa-brands fa-telegram"></i> Telegram Sinyal Kanalına Katıl
+                <i class="fa-brands fa-telegram"></i> Telegram Kanalına Katıl
             </a>
         </header>
 
@@ -359,15 +335,15 @@
         <!-- ANA TÜMÜNÜ TARA EYLEM KARTI -->
         <div class="main-action-card">
             <div class="main-action-info">
-                <h2>🚀 Tüm Stratejileri Çalıştır</h2>
-                <p>6 stratejiyi tara, Telegram'a bülten kartı at.</p>
+                <h2>🚀 Tümünü Çalıştır</h2>
+                <p>6 stratejiyi tara, Telegram'a bülten at.</p>
             </div>
             <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn-large">
                 <i class="fa-solid fa-play"></i> Tara
             </a>
         </div>
 
-        <!-- STRATEJİ LİSTESİ (2'Lİ YAN YANA GRID) -->
+        <!-- STRATEJİ LİSTESİ (2'Lİ YAN YANA MOBİL GRID) -->
         <div class="section-title">
             <i class="fa-solid fa-layer-group" style="color: var(--accent-blue);"></i> Aktif Stratejiler (6 Adet)
         </div>
@@ -380,7 +356,7 @@
                         <h3>💎 1. Rallİ</h3>
                         <span class="strategy-number">STR 1</span>
                     </div>
-                    <p>RSI-MOST Matrix Blue Cross (180+ Bar)</p>
+                    <p>RSI-MOST Matrix Blue Cross</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
                     <i class="fa-solid fa-bolt"></i> Çalıştır
@@ -394,7 +370,7 @@
                         <h3>💥 2. Üçlü</h3>
                         <span class="strategy-number">STR 2</span>
                     </div>
-                    <p>Leda + Mavilim34 + WMA79 Confluence</p>
+                    <p>Leda + Mavilim34 + WMA79</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
                     <i class="fa-solid fa-bolt"></i> Çalıştır
@@ -408,7 +384,7 @@
                         <h3>📈 3. Günlük</h3>
                         <span class="strategy-number">STR 3</span>
                     </div>
-                    <p>Günlük Leda + MACD Pozitif Kesişim</p>
+                    <p>Günlük Leda + MACD Kesişim</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
                     <i class="fa-solid fa-bolt"></i> Çalıştır
@@ -422,7 +398,7 @@
                         <h3>📈 4. Haftalık</h3>
                         <span class="strategy-number">STR 4</span>
                     </div>
-                    <p>Haftalık Leda + MACD Trend Teyidi</p>
+                    <p>Haftalık Leda + MACD Trend</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
                     <i class="fa-solid fa-bolt"></i> Çalıştır
@@ -436,7 +412,7 @@
                         <h3>💎 5. HU Gün</h3>
                         <span class="strategy-number">STR 5</span>
                     </div>
-                    <p>Hull/WMA 200-400 Çizgi Kesişimi</p>
+                    <p>Hull/WMA 200-400 Çizgi Kesişim</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
                     <i class="fa-solid fa-bolt"></i> Çalıştır
@@ -450,7 +426,7 @@
                         <h3>🌊 6. Mavilim</h3>
                         <span class="strategy-number">STR 6</span>
                     </div>
-                    <p>Haftalık Mavilim WMA Zincir + MACD</p>
+                    <p>Haftalık Mavilim WMA + MACD</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">
                     <i class="fa-solid fa-bolt"></i> Çalıştır
@@ -470,7 +446,7 @@
                 "interval": "1D",
                 "width": "100%",
                 "isTransparent": true,
-                "height": 350,
+                "height": 300,
                 "symbol": "BIST:XU100",
                 "showIntervalTabs": true,
                 "displayMode": "single",
