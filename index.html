@@ -13,7 +13,6 @@
             --text-white: #ffffff;
             --text-muted: #8b949e;
             --accent-green: #238636;
-            --accent-green-hover: #2ea043;
             --accent-blue: #58a6ff;
             --accent-gold: #f1e05a;
             --border-color: #30363d;
@@ -41,12 +40,12 @@
 
         /* Üst Canlı Bant */
         .tradingview-ticker {
-            width: 200%;
-            height: 60px;
+            width: 100%;
+            height: 38px;
             overflow: hidden;
             border-bottom: 1px solid var(--border-color);
             background-color: #161b22;
-            border-radius: 6px;
+            border-radius: 4px;
             margin-bottom: 2px;
         }
 
@@ -58,11 +57,10 @@
             flex: 1;
         }
 
-        /* Profesyonel & Dikkat Çekici Header */
+        /* Header */
         header {
             text-align: center;
             padding: 1px 0;
-            margin-bottom: 1px;
         }
 
         .logo-title {
@@ -77,7 +75,6 @@
             gap: 5px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
         }
 
         .logo-title i {
@@ -95,7 +92,6 @@
             border-radius: 12px;
             font-size: 0.62rem;
             font-weight: 700;
-            box-shadow: 0 2px 5px rgba(34, 158, 217, 0.3);
         }
 
         /* Market Summary Bar */
@@ -153,10 +149,9 @@
             gap: 4px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 1px;
-            margin-top: 1px;
         }
 
-        /* Strategy Cards - 2'Lİ YAN YANA ULTRA KOMPAKT SIKIŞTIRILMIŞ */
+        /* Strategy Cards */
         .strategy-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -221,13 +216,13 @@
             width: 100%;
         }
 
-        /* Teknik Gösterge - Ekranın Altına Tam Oturan Alan */
+        /* Teknik Gösterge - Alt Alana Tam Sığacak Boyut */
         .chart-section {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 1px;
-            height: 140px;
+            height: 110px;
             overflow: hidden;
             margin-top: 1px;
         }
@@ -250,8 +245,8 @@
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
             {
             "symbols": [
-                { "proName": "XU100", "title": "BIST 100" },
-                { "proName": "XU030", "title": "BIST 30" },
+                { "proName": "BIST:XU100", "title": "BIST 100" },
+                { "proName": "BIST:XU030", "title": "BIST 30" },
                 { "description": "USD/TRY", "proName": "FX_IDC:USDTRY" },
                 { "description": "EUR/TRY", "proName": "FX_IDC:EURTRY" },
                 { "description": "Gram Altın", "proName": "TVC:GOLD" }
@@ -381,11 +376,11 @@
                 {
                 "interval": "1D",
                 "width": "100%",
-                "height": "135",
+                "height": "100%",
                 "isTransparent": true,
-                "symbol": "XU100",
+                "symbol": "BIST:XU100",
                 "showIntervalTabs": false,
-                "displayMode": "single",
+                "displayMode": "compact",
                 "locale": "tr",
                 "colorTheme": "dark"
                 }
