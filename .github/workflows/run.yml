@@ -7,8 +7,10 @@ on:
         description: 'Çalıştırılacak Strateji'
         required: true
         default: 'Hepsi'
+  repository_dispatch:
+    types: [run-scan]
   schedule:
-    # Türkiye saatiyle 10:20 - 18:20 arası her saat 20 geçe (UTC karşılıkları: 07:20 - 15:20)
+    # Türkiye saatiyle 10:20 - 18:20 arası her saat 20 geçe (UTC: 07:20 - 15:20)
     - cron: '20 7,8,9,10,11,12,13,14,15 * * 1-5'
 
 jobs:
@@ -29,5 +31,5 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-          SELECTED_STRATEGY: ${{ github.event.inputs.strategy || 'Hepsi' }}
+          SELECTED_STRATEGY: ${{ github.event.inputs.strategy || github.event.client_payload.strategy || 'Hepsi' }}
         run: python scanner.py
