@@ -285,8 +285,8 @@ def run_targeted_screener():
         f"🤖 Bot için <b>6 Özel Strateji</b> aktif.\n"
         f"🔍 Kendi kullandığınız indikatörler ile kontrol ediniz.\n"
         f"📰 Güncel piyasa verilerini ve haberleri takip etmeyi unutmayın.\n"
+        f"🤖 Bot aktif ve tarama gerçekleştiriliyor...\n"
         f"⚠️ <i>Sinyaller bilgi amaçlıdır, Yatırım Tavsiyesi Değildir.</i>"
-        f"🤖 Bot aktif ve tarama gerçekleştiriliyor..."
     )
 
     s1_uzun_ralli, s4_uclu_kesisim = [], []
