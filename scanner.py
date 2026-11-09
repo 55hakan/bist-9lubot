@@ -12,13 +12,15 @@ import yfinance as yf
 # ======================================================================
 # ⚙️ GENEL AYARLAR VE GÜVENLİ SABİTLER
 # ======================================================================
+# ======================================================================
+# ⚙️ GENEL AYARLAR VE GÜVENLİ SABİTLER
+# ======================================================================
 BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-CHAT_IDS = [os.environ.get("CHAT_ID")]
-CHAT_IDS = [CHAT_ID] if CHAT_ID else []
+CHAT_ID = os.environ.get("CHAT_ID")
+TELEGRAM_CHAT_IDS = [CHAT_ID] if CHAT_ID else []
 SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 2
-
 BIST_TICKERS = [
     "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
     "ASTOR", "BERA", "BIMAS", "BRSAN", "BRYAT", "BUCIM", "CCOLA", "CIMSA", "CWENE", "DOAS",
