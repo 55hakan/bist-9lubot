@@ -282,6 +282,10 @@ def run_targeted_screener():
     telegram_gonder(
         f"🎯 <b>Emekli Sinyal Tarama Başlatıldı.</b>\n"
         f"📊 Mod: <b>{SELECTED_STRATEGY}</b>\n"
+        f"🤖 Bot için <b>6 Özel Strateji</b> aktif.\n"
+        f"🔍 Kendi kullandığınız indikatörler ile kontrol ediniz.\n"
+        f"📰 Güncel piyasa verilerini ve haberleri takip etmeyi unutmayın.\n"
+        f"⚠️ <i>Sinyaller bilgi amaçlıdır, Yatırım Tavsiyesi Değildir.</i>"
         f"🤖 Bot aktif ve tarama gerçekleştiriliyor..."
     )
 
