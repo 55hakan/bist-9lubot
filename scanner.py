@@ -13,7 +13,7 @@ import yfinance as yf
 # ⚙️ GENEL AYARLAR VE GÜVENLİ SABİTLER
 # ======================================================================
 BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-TELEGRAM_CHAT_IDS = [os.environ.get("CHAT_ID")]
+CHAT_IDS = [os.environ.get("CHAT_ID")]
 CHAT_IDS = [CHAT_ID] if CHAT_ID else []
 SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 50
