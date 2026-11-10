@@ -309,56 +309,73 @@ def run_targeted_screener():
                 except:
                     continue
 
-                if not df_h.empty and len(df_h) >= 30:
-                    res_h = calculate_leda_indicators(df_h)
-                    if res_h is not None and "sell" in res_h.columns and res_h["sell"].iloc[-1]:
-                        tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
-                        pro_h = calculate_pro_metrics(df_h, df_w)
-                        if pro_h:
-                            s9_leda_hourly_sell.append((ticker, tv_link_h, pro_h, "⚠️ SAATLİK LEDA SAT SİNYALİ"))
+                try:
+                    if not df_h.empty and len(df_h) >= 30:
+                        res_h = calculate_leda_indicators(df_h)
+                        if res_h is not None and "sell" in res_h.columns and res_h["sell"].iloc[-1]:
+                            tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
+                            pro_h = calculate_pro_metrics(df_h, df_w)
+                            if pro_h:
+                                s9_leda_hourly_sell.append((ticker, tv_link_h, pro_h, "⚠️ SAATLİK LEDA SAT SİNYALİ"))
+                except Exception as e:
+                    print(f"Saatli Leda Hatası {ticker}: {e}")
 
                 daily_signals = []
                 ralli_d = False
-                if not df_d.empty and len(df_d) >= 180:
-                    res_ralli = calculate_rsi_most_matrix(df_d['Close'])
-                    if res_ralli["blue_cross_red_above_50"]:
-                        ralli_d = True
-                        daily_signals.append("Ralli Başlangıç")
+                try:
+                    if not df_d.empty and len(df_d) >= 180:
+                        res_ralli = calculate_rsi_most_matrix(df_d['Close'])
+                        if res_ralli["blue_cross_red_above_50"]:
+                            ralli_d = True
+                            daily_signals.append("Ralli Başlangıç")
+                except: pass
 
                 uclu_d = False
-                if not df_d.empty and check_triple_confluence_signal(df_d):
-                    uclu_d = True
-                    daily_signals.append("Üçlü Kesişim")
+                try:
+                    if not df_d.empty and check_triple_confluence_signal(df_d):
+                        uclu_d = True
+                        daily_signals.append("Üçlü Kesişim")
+                except: pass
 
                 leda_d = False
-                if not df_d.empty and len(df_d) >= 35:
-                    res_leda_d = calculate_leda_indicators(df_d)
-                    if res_leda_d is not None and res_leda_d["buy"].iloc[-1] and check_macd_cross(df_d):
-                        leda_d = True
-                        daily_signals.append("Leda Günlük")
+                try:
+                    if not df_d.empty and len(df_d) >= 35:
+                        res_leda_d = calculate_leda_indicators(df_d)
+                        if res_leda_d is not None and res_leda_d["buy"].iloc[-1] and check_macd_cross(df_d):
+                            leda_d = True
+                            daily_signals.append("Leda Günlük")
+                except: pass
 
                 hu_d = False
-                if not df_d.empty and check_hu_cross_signal(df_d) and check_macd_cross(df_d):
-                    hu_d = True
-                    daily_signals.append("HU Günlük")
+                try:
+                    if not df_d.empty and check_hu_cross_signal(df_d) and check_macd_cross(df_d):
+                        hu_d = True
+                        daily_signals.append("HU Günlük")
+                except: pass
 
                 weekly_signals = []
                 uclu_w = False
-                if not df_w.empty and check_triple_confluence_signal(df_w):
-                    uclu_w = True
-                    weekly_signals.append("Üçlü Kesişim")
+                try:
+                    if not df_w.empty and check_triple_confluence_signal(df_w):
+                        uclu_w = True
+                        weekly_signals.append("Üçlü Kesişim")
+                except: pass
 
                 leda_w = False
-                if not df_w.empty and len(df_w) >= 35:
-                    res_leda_w = calculate_leda_indicators(df_w)
-                    if res_leda_w is not None and res_leda_w["buy"].iloc[-1] and check_macd_cross(df_w):
-                        leda_w = True
-                        weekly_signals.append("Leda Haftalık")
+                try:
+                    if not df_w.empty and len(df_w) >= 35:
+                        res_leda_w = calculate_leda_indicators(df_w)
+                        if res_leda_w is not None and res_leda_w["buy"].iloc[-1] and check_macd_cross(df_w):
+                            leda_w = True
+                            weekly_signals.append("Leda Haftalık")
+                except: pass
 
                 mav_w = False
-                if not df_w.empty and check_mavilim_signal(df_w) and check_macd_cross(df_w):
-                    mav_w = True
-                    weekly_signals.append("Mavilim Haftalık")
+                try:
+                    if not df_w.empty and check_mavilim_signal(df_w) and check_macd_cross(df_w):
+                        mav_w = True
+                        weekly_signals.append("Mavilim Haftalık")
+                except: pass
 
                 is_double_confluence = len(daily_signals) > 0 and len(weekly_signals) > 0
 
@@ -424,31 +441,41 @@ def run_targeted_screener():
     def report_strategy(title, items):
         if items:
             for item in items:
-                ticker, tv_link, pro, badge = item
-                send_pro_report(title, ticker, tv_link, pro, badge)
+                try:
+                    if len(item) == 4:
+                        ticker, tv_link, pro, badge = item
+                    else:
+                        ticker, tv_link, pro = item[:3]
+                        badge = ""
+                    send_pro_report(title, ticker, tv_link, pro, badge)
+                except Exception as e:
+                    print(f"Rapor Gönderim Hatası: {e}")
         else:
             telegram_gonder(f"ℹ️ <b>Strateji:</b> <b>{title}</b>\nHer şey normal, bu periyotta sinyal yok.")
 
-    if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk", "Leda Haftalik"]:
-        report_strategy("⏰ SAATLİK LEDA SAT SİNYALİ", s9_leda_hourly_sell)
-        
-    if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"]: 
-        report_strategy("1️⃣ RALLİ BAŞLANGIÇ", s1_uzun_ralli)
-        
-    if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]: 
-        report_strategy("2️⃣ ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
-        
-    if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"]: 
-        report_strategy("3️⃣ ÖZEL GÜNLÜK", s5_leda_d)
-        
-    if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]: 
-        report_strategy("4️⃣ ÖZEL HAFTALIK", s6_leda_w)
-        
-    if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"]: 
-        report_strategy("5️⃣ HU GÜNLÜK", s7_hu_d)
-        
-    if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: 
-        report_strategy("6️⃣ MAVİLİM HAFTALIK", s8_mav_w)
+    try:
+        if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk", "Leda Haftalik"]:
+            report_strategy("⏰ SAATLİK LEDA SAT SİNYALİ", s9_leda_hourly_sell)
+            
+        if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"]: 
+            report_strategy("1️⃣ RALLİ BAŞLANGIÇ", s1_uzun_ralli)
+            
+        if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]: 
+            report_strategy("2️⃣ ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
+            
+        if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"]: 
+            report_strategy("3️⃣ ÖZEL GÜNLÜK", s5_leda_d)
+            
+        if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]: 
+            report_strategy("4️⃣ ÖZEL HAFTALIK", s6_leda_w)
+            
+        if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"]: 
+            report_strategy("5️⃣ HU GÜNLÜK", s7_hu_d)
+            
+        if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: 
+            report_strategy("6️⃣ MAVİLİM HAFTALIK", s8_mav_w)
+    except Exception as e:
+        print(f"Raporlama Döngüsü Hatası: {e}")
 
     telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
 
