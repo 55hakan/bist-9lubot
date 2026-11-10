@@ -1,6 +1,8 @@
 import os
 import time
+import json
 import traceback
+from datetime import datetime
 import numpy as np
 import pandas as pd
 import requests as req
@@ -18,6 +20,8 @@ TELEGRAM_CHAT_IDS = [CHAT_ID] if CHAT_ID else []
 SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 30
 DELAY_BETWEEN_BATCHES = 1
+
+CACHE_FILE = "sent_signals.json"
 
 BIST_TICKERS = [
     "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
@@ -44,6 +48,33 @@ BIST_TICKERS = [
     "NUHCM", "BOBET"
 ]
 BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
+
+# ======================================================================
+# 📁 HAFIZA VE FİLTRELEME YÖNETİMİ (TEKRARI ÖNLEME)
+# ======================================================================
+def load_cache():
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if data.get("date") == today_str:
+                    return data.get("sent", {})
+        except:
+            pass
+    return {}
+
+def save_cache(sent_dict):
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    data = {
+        "date": today_str,
+        "sent": sent_dict
+    }
+    try:
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Cache kayıt hatası: {e}")
 
 # ======================================================================
 # 📩 TELEGRAM GÖNDERİM FONKSİYONU
@@ -289,6 +320,10 @@ def run_targeted_screener():
         f"⚠️ <i>Sinyaller bilgi amaçlıdır, Yatırım Tavsiyesi Değildir.</i>"
     )
 
+    # Günlük hafızayı yükle (Daha önce gönderilen hisseler)
+    sent_cache = load_cache()
+    new_signals_found = 0
+
     s1_uzun_ralli, s4_uclu_kesisim = [], []
     s5_leda_d, s6_leda_w, s7_hu_d, s8_mav_w = [], [], [], []
     s9_leda_hourly_sell = []
@@ -439,6 +474,7 @@ def run_targeted_screener():
         time.sleep(DELAY_BETWEEN_BATCHES)
 
     def report_strategy(title, items):
+        nonlocal new_signals_found
         if items:
             for item in items:
                 try:
@@ -447,11 +483,21 @@ def run_targeted_screener():
                     else:
                         ticker, tv_link, pro = item[:3]
                         badge = ""
-                    send_pro_report(title, ticker, tv_link, pro, badge)
+                    
+                    # DÜPLİKAT / TEKRAR FİLTRELEME KONTROLÜ
+                    if title not in sent_cache:
+                        sent_cache[title] = []
+                    
+                    if ticker not in sent_cache[title]:
+                        # Yeni sinyal! Gönder ve hafızaya ekle
+                        send_pro_report(title, ticker, tv_link, pro, badge)
+                        sent_cache[title].append(ticker)
+                        new_signals_found += 1
+                    else:
+                        # Daha önce bugün gönderilmiş, spam yapma, atla.
+                        print(f"[{title}] {ticker} bugün zaten gönderilmiş, filtrelendi.")
                 except Exception as e:
                     print(f"Rapor Gönderim Hatası: {e}")
-        else:
-            telegram_gonder(f"ℹ️ <b>Strateji:</b> <b>{title}</b>\nHer şey normal, bu periyotta sinyal yok.")
 
     try:
         if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk", "Leda Haftalik"]:
@@ -476,6 +522,13 @@ def run_targeted_screener():
             report_strategy("6️⃣ MAVİLİM HAFTALIK", s8_mav_w)
     except Exception as e:
         print(f"Raporlama Döngüsü Hatası: {e}")
+
+    # Güncellenmiş hafızayı kaydet
+    save_cache(sent_cache)
+
+    # Eğer bu saatlik taramada hiç yeni sinyal çıkmadıysa trend devam ediyor mesajı ver
+    if new_signals_found == 0:
+        telegram_gonder("📊 <b>Saatlik Piyasalar Kontrol Edildi.</b>\n🔄 Yeni sinyal bulunamadı, mevcut trendler korunuyor / takipte.")
 
     telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
 
