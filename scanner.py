@@ -431,15 +431,27 @@ def run_targeted_screener():
         else:
             telegram_gonder(f"ℹ️ <b>Strateji:</b> <b>{title}</b>\nHer şey normal, bu periyotta sinyal yok.")
 
-    report_strategy("⏰ SAATLİK LEDA SAT SİNYALİ", s9_leda_hourly_sell)
-    report_strategy("1️⃣ RALLİ BAŞLANGIÇ", s1_uzun_ralli)
-    report_strategy("2️⃣ ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
-    report_strategy("3️⃣ ÖZEL GÜNLÜK", s5_leda_d)
-    report_strategy("4️⃣ ÖZEL HAFTALIK", s6_leda_w)
-    report_strategy("5️⃣ HU GÜNLÜK", s7_hu_d)
-    report_strategy("6️⃣ MAVİLİM HAFTALIK", s8_mav_w)
+    # Tüm stratejileri eksiksiz ve güvenli bir şekilde raporla
+    if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk", "Leda Haftalik"]:
+        report_strategy("⏰ SAATLİK LEDA SAT SİNYALİ", s9_leda_hourly_sell)
+        
+    if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"]: 
+        report_strategy("1️⃣ RALLİ BAŞLANGIÇ", s1_uzun_ralli)
+        
+    if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]: 
+        report_strategy("2️⃣ ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
+        
+    if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"]: 
+        report_strategy("3️⃣ ÖZEL GÜNLÜK", s5_leda_d)
+        
+    if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]: 
+        report_strategy("4️⃣ ÖZEL HAFTALIK", s6_leda_w)
+        
+    if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"]: 
+        report_strategy("5️⃣ HU GÜNLÜK", s7_hu_d)
+        
+    if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: 
+        report_strategy("6️⃣ MAVİLİM HAFTALIK", s8_mav_w)
 
+    # Taramanın bittiğini bildiren kapanış mesajı artık garanti bir şekilde gönderilecek
     telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
-
-if __name__ == "__main__":
-    run_targeted_screener()
