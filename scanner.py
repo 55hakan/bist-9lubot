@@ -17,7 +17,7 @@ CHAT_ID = os.environ.get("CHAT_ID")
 TELEGRAM_CHAT_IDS = [CHAT_ID] if CHAT_ID else []
 SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 30
-DELAY_BETWEEN_BATCHES = 2
+DELAY_BETWEEN_BATCHES = 1
 
 BIST_TICKERS = [
     "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
@@ -313,11 +313,10 @@ def run_targeted_screener():
                     res_h = calculate_leda_indicators(df_h)
                     if res_h is not None and "sell" in res_h.columns and res_h["sell"].iloc[-1]:
                         tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
-                        pro_h = calculate_pro_metrics(df_h, df_w) # Saatlik sinyal için saatlik veri üzerinden hesaplama
+                        pro_h = calculate_pro_metrics(df_h, df_w)
                         if pro_h:
                             s9_leda_hourly_sell.append((ticker, tv_link_h, pro_h, "⚠️ SAATLİK LEDA SAT SİNYALİ"))
 
-                # --- 1. AŞAMA: TÜM GÜNLÜK VE HAFTALIK KOŞULLAR ---
                 daily_signals = []
                 ralli_d = False
                 if not df_d.empty and len(df_d) >= 180:
@@ -361,12 +360,11 @@ def run_targeted_screener():
                     mav_w = True
                     weekly_signals.append("Mavilim Haftalık")
 
-                # --- 2. AŞAMA: ÇİFTE ONAY VE TEKİL SİNYAL KONTROLÜ ---
                 is_double_confluence = len(daily_signals) > 0 and len(weekly_signals) > 0
 
                 if is_double_confluence:
                     tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
-                    pro_w = calculate_pro_metrics(df_w, df_w) # Çifte onay haftalık periyotta raporlandığı için haftalık ATR
+                    pro_w = calculate_pro_metrics(df_w, df_w)
                     if pro_w:
                         badge_text = f"⭐ ÇİFTE ONAY: ({' + '.join(daily_signals)}) & ({' + '.join(weekly_signals)})"
                         if (SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"]) and ralli_d:
@@ -384,37 +382,37 @@ def run_targeted_screener():
                 else:
                     if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"] and ralli_d:
                         tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                        pro_d = calculate_pro_metrics(df_d, df_w) # Günlük sinyal -> Günlük ATR
+                        pro_d = calculate_pro_metrics(df_d, df_w)
                         if pro_d: s1_uzun_ralli.append((ticker, tv_link, pro_d, ""))
 
                     if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]:
                         if uclu_d:
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                            pro_d = calculate_pro_metrics(df_d, df_w) # Günlük sinyal -> Günlük ATR
+                            pro_d = calculate_pro_metrics(df_d, df_w)
                             if pro_d: s4_uclu_kesisim.append((ticker, tv_link, pro_d, ""))
                         elif uclu_w:
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
-                            pro_w = calculate_pro_metrics(df_w, df_w) # Haftalık sinyal -> Haftalık ATR
+                            pro_w = calculate_pro_metrics(df_w, df_w)
                             if pro_w: s4_uclu_kesisim.append((ticker, tv_link, pro_w, ""))
 
                     if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"] and leda_d:
                         tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                        pro_d = calculate_pro_metrics(df_d, df_w) # Günlük sinyal -> Günlük ATR
+                        pro_d = calculate_pro_metrics(df_d, df_w)
                         if pro_d: s5_leda_d.append((ticker, tv_link, pro_d, ""))
 
                     if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"] and leda_w:
                         tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
-                        pro_w = calculate_pro_metrics(df_w, df_w) # Haftalık sinyal -> Haftalık ATR
+                        pro_w = calculate_pro_metrics(df_w, df_w)
                         if pro_w: s6_leda_w.append((ticker, tv_link, pro_w, ""))
 
                     if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"] and hu_d:
                         tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                        pro_d = calculate_pro_metrics(df_d, df_w) # Günlük sinyal -> Günlük ATR
+                        pro_d = calculate_pro_metrics(df_d, df_w)
                         if pro_d: s7_hu_d.append((ticker, tv_link, pro_d, ""))
 
                     if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"] and mav_w:
                         tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
-                        pro_w = calculate_pro_metrics(df_w, df_w) # Haftalık sinyal -> Haftalık ATR
+                        pro_w = calculate_pro_metrics(df_w, df_w)
                         if pro_w: s8_mav_w.append((ticker, tv_link, pro_w, ""))
 
         except Exception as e:
@@ -431,7 +429,6 @@ def run_targeted_screener():
         else:
             telegram_gonder(f"ℹ️ <b>Strateji:</b> <b>{title}</b>\nHer şey normal, bu periyotta sinyal yok.")
 
-    # Tüm stratejileri eksiksiz ve güvenli bir şekilde raporla
     if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk", "Leda Haftalik"]:
         report_strategy("⏰ SAATLİK LEDA SAT SİNYALİ", s9_leda_hourly_sell)
         
@@ -453,5 +450,7 @@ def run_targeted_screener():
     if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: 
         report_strategy("6️⃣ MAVİLİM HAFTALIK", s8_mav_w)
 
-    # Taramanın bittiğini bildiren kapanış mesajı artık garanti bir şekilde gönderilecek
     telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
+
+if __name__ == "__main__":
+    run_targeted_screener()
