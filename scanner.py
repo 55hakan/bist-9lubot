@@ -59,9 +59,12 @@ def load_cache():
             with open(CACHE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if data.get("date") == today_str:
+                    print("📁 Önbellek dosyadan başarıyla yüklendi.")
                     return data.get("sent", {})
-        except:
-            pass
+                else:
+                    print("📅 Yeni güne geçildi, önbellek sıfırlanıyor...")
+        except Exception as e:
+            print(f"⚠️ Cache okuma hatası: {e}")
     return {}
 
 def save_cache(sent_dict):
@@ -73,8 +76,9 @@ def save_cache(sent_dict):
     try:
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
+        print("💾 Önbellek diske başarıyla kaydedildi.")
     except Exception as e:
-        print(f"Cache kayıt hatası: {e}")
+        print(f"❌ Cache kayıt hatası: {e}")
 
 # ======================================================================
 # 📩 TELEGRAM GÖNDERİM FONKSİYONU
@@ -523,7 +527,7 @@ def run_targeted_screener():
     except Exception as e:
         print(f"Raporlama Döngüsü Hatası: {e}")
 
-    # Güncellenmiş hafızayı kaydet
+    # Güncellenmiş hafızayı diske kaydet
     save_cache(sent_cache)
 
     # Eğer bu saatlik taramada hiç yeni sinyal çıkmadıysa trend devam ediyor mesajı ver
