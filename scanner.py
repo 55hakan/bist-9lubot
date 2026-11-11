@@ -21,7 +21,9 @@ SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 30
 DELAY_BETWEEN_BATCHES = 1
 
-CACHE_FILE = "sent_signals.json"
+# Scriptin çalıştığı klasörün yolunu otomatik olarak baz alır (Kesin Çözüm)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(BASE_DIR, "sent_signals.json")
 
 BIST_TICKERS = [
     "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
