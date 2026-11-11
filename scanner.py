@@ -54,19 +54,25 @@ BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
 # ======================================================================
 # 📁 HAFIZA VE FİLTRELEME YÖNETİMİ (TEKRARI ÖNLEME)
 # ======================================================================
+# ======================================================================
+# 📁 HAFIZA VE FİLTRELEME YÖNETİMİ (TEKRARI ÖNLEME - LOGLU)
+# ======================================================================
 def load_cache():
     today_str = datetime.now().strftime("%Y-%m-%d")
+    print(f"🔍 Cache dosyası aranıyor: {CACHE_FILE}")
     if os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if data.get("date") == today_str:
-                    print("📁 Önbellek dosyadan başarıyla yüklendi.")
+                    print(f"📁 Başarılı! Önbellek yüklendi. İçerik: {data.get('sent', {})}")
                     return data.get("sent", {})
                 else:
                     print("📅 Yeni güne geçildi, önbellek sıfırlanıyor...")
         except Exception as e:
             print(f"⚠️ Cache okuma hatası: {e}")
+    else:
+        print("⚠️ Önbellek dosyası (sent_signals.json) henüz bulunamadı, sıfırdan başlanıyor.")
     return {}
 
 def save_cache(sent_dict):
@@ -78,7 +84,8 @@ def save_cache(sent_dict):
     try:
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        print("💾 Önbellek diske başarıyla kaydedildi.")
+        print(f"💾 Önbellek diske başarıyla kaydedildi. Yol: {CACHE_FILE}")
+        print(f"💾 Kaydedilen veriler: {sent_dict}")
     except Exception as e:
         print(f"❌ Cache kayıt hatası: {e}")
 
