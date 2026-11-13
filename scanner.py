@@ -415,8 +415,10 @@ def run_targeted_screener():
                     except Exception as e:
                         print(f"Saatlik Leda Kontrol Hatası ({ticker}): {e}")
 
-                    # --- 2. BİRİNCİL KOŞUL TESPİTLERİ (Günlük & Haftalık) ---
+                    # --- 2. GÜNLÜK & HAFTALIK KOŞUL TESPİTLERİ ---
                     daily_signals = []
+                    weekly_signals = []
+
                     ralli_d = False
                     if not df_d.empty and len(df_d) >= 180:
                         res_ralli = calculate_rsi_most_matrix(df_d['Close'])
@@ -441,7 +443,6 @@ def run_targeted_screener():
                         hu_macd_zero = True
                         daily_signals.append("HU + MACD Sıfır")
 
-                    weekly_signals = []
                     leda_w = False
                     if not df_w.empty and len(df_w) >= 35:
                         res_leda_w = calculate_leda_indicators(df_w)
@@ -454,8 +455,8 @@ def run_targeted_screener():
                         mav_w = True
                         weekly_signals.append("Mavilim Haftalık")
 
-                    # --- 3. ÇİFTE ZAMAN DİLİMİ ONAY KONTROLÜ (GÜNLÜK + HAFTALIK) ---
-                    is_double_confluence = len(daily_signals) > 0 and len(weekly_signals) > 0
+                    # --- 3. ÇİFTE ZAMAN DİLİMİ ONAY KONTROLÜ ---
+                    is_double_confluence = (len(daily_signals) > 0) and (len(weekly_signals) > 0)
 
                     if is_double_confluence:
                         tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
@@ -505,66 +506,67 @@ def run_targeted_screener():
                                     results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük + Haftalık", "Detay": badge_text, "Link": tv_link})
                                     mark_signal_sent(ticker, st_name)
 
-                    # --- 4. TEKİL SİNYALLER (Çifte Onay Olmasa Bile Tek Başına Tetiklenenler) ---
-                    if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"] and ralli_d:
-                        st_name = "1️⃣ RALLİ BAŞLANGIÇ"
-                        if not signal_already_sent(ticker, st_name):
-                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                            pro_d = calculate_pro_metrics(df_d, df_w)
-                            if pro_d:
-                                s1_uzun_ralli.append((ticker, tv_link, pro_d, ""))
-                                results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
-                                mark_signal_sent(ticker, st_name)
+                    else:
+                        # --- 4. TEKİL SİNYALLER ---
+                        if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"] and ralli_d:
+                            st_name = "1️⃣ RALLİ BAŞLANGIÇ"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                                pro_d = calculate_pro_metrics(df_d, df_w)
+                                if pro_d:
+                                    s1_uzun_ralli.append((ticker, tv_link, pro_d, ""))
+                                    results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
+                                    mark_signal_sent(ticker, st_name)
 
-                    if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"] and hu_d:
-                        st_name = "2️⃣ GÜNLÜK HU AL SİNYALİ"
-                        if not signal_already_sent(ticker, st_name):
-                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                            pro_d = calculate_pro_metrics(df_d, df_w)
-                            if pro_d:
-                                s2_hu_gunluk.append((ticker, tv_link, pro_d, ""))
-                                results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
-                                mark_signal_sent(ticker, st_name)
+                        if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"] and hu_d:
+                            st_name = "2️⃣ GÜNLÜK HU AL SİNYALİ"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                                pro_d = calculate_pro_metrics(df_d, df_w)
+                                if pro_d:
+                                    s2_hu_gunluk.append((ticker, tv_link, pro_d, ""))
+                                    results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
+                                    mark_signal_sent(ticker, st_name)
 
-                    if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"] and leda_d:
-                        st_name = "3️⃣ LEDA GÜNLÜK"
-                        if not signal_already_sent(ticker, st_name):
-                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                            pro_d = calculate_pro_metrics(df_d, df_w)
-                            if pro_d:
-                                s3_leda_d.append((ticker, tv_link, pro_d, ""))
-                                results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
-                                mark_signal_sent(ticker, st_name)
+                        if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"] and leda_d:
+                            st_name = "3️⃣ LEDA GÜNLÜK"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                                pro_d = calculate_pro_metrics(df_d, df_w)
+                                if pro_d:
+                                    s3_leda_d.append((ticker, tv_link, pro_d, ""))
+                                    results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
+                                    mark_signal_sent(ticker, st_name)
 
-                    if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"] and leda_w:
-                        st_name = "4️⃣ LEDA HAFTALIK"
-                        if not signal_already_sent(ticker, st_name):
-                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
-                            pro_w = calculate_pro_metrics(df_w, df_w)
-                            if pro_w:
-                                s4_leda_w.append((ticker, tv_link, pro_w, ""))
-                                results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Haftalık", "Detay": "Normal", "Link": tv_link})
-                                mark_signal_sent(ticker, st_name)
+                        if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"] and leda_w:
+                            st_name = "4️⃣ LEDA HAFTALIK"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                                pro_w = calculate_pro_metrics(df_w, df_w)
+                                if pro_w:
+                                    s4_leda_w.append((ticker, tv_link, pro_w, ""))
+                                    results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Haftalık", "Detay": "Normal", "Link": tv_link})
+                                    mark_signal_sent(ticker, st_name)
 
-                    if SELECTED_STRATEGY in ["Hepsi", "HU Macd Sifir"] and hu_macd_zero:
-                        st_name = "5️⃣ HU AL + MACD SIFIR KESİŞİM"
-                        if not signal_already_sent(ticker, st_name):
-                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
-                            pro_d = calculate_pro_metrics(df_d, df_w)
-                            if pro_d:
-                                s5_hu_macd_zero.append((ticker, tv_link, pro_d, ""))
-                                results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
-                                mark_signal_sent(ticker, st_name)
+                        if SELECTED_STRATEGY in ["Hepsi", "HU Macd Sifir"] and hu_macd_zero:
+                            st_name = "5️⃣ HU AL + MACD SIFIR KESİŞİM"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                                pro_d = calculate_pro_metrics(df_d, df_w)
+                                if pro_d:
+                                    s5_hu_macd_zero.append((ticker, tv_link, pro_d, ""))
+                                    results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Günlük", "Detay": "Normal", "Link": tv_link})
+                                    mark_signal_sent(ticker, st_name)
 
-                    if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"] and mav_w:
-                        st_name = "6️⃣ MAVİLİM HAFTALIK"
-                        if not signal_already_sent(ticker, st_name):
-                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
-                            pro_w = calculate_pro_metrics(df_w, df_w)
-                            if pro_w:
-                                s6_mav_w.append((ticker, tv_link, pro_w, ""))
-                                results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Haftalık", "Detay": "Normal", "Link": tv_link})
-                                mark_signal_sent(ticker, st_name)
+                        if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"] and mav_w:
+                            st_name = "6️⃣ MAVİLİM HAFTALIK"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                                pro_w = calculate_pro_metrics(df_w, df_w)
+                                if pro_w:
+                                    s6_mav_w.append((ticker, tv_link, pro_w, ""))
+                                    results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "Haftalık", "Detay": "Normal", "Link": tv_link})
+                                    mark_signal_sent(ticker, st_name)
 
             except Exception as e:
                 print(f"Batch İşlem Hatası: {e}")
@@ -605,7 +607,10 @@ def run_targeted_screener():
 
     finally:
         # 🏁 Bitiş mesajı her koşulda kesinlikle gönderilir
-        telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
+        try:
+            telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
+        except Exception as ex:
+            print(f"Bitiş mesajı gönderilemedi: {ex}")
 
     print("\n" + "="*50)
     print("🏁 TARAMA TAMAMLANDI - SONUÇ ÖZETİ")
