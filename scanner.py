@@ -41,7 +41,7 @@ BIST_TICKERS = [
     "QUAGR", "RGYAS", "RYSAS", "SDTTR", "SELEC", "SNICA", "SUNTK", "SUWEN", "TARKM", "TATEN",
     "TATGD", "TBORG", "TEZOL", "TKNSA", "TMSN", "TRCAS", "TRGYO", "TSPOR", "TUKAS", "ULUSE",
     "ULUUN", "UNLU", "USAK", "VAKKO", "VBTYZ", "VERTU", "VERUS", "VESBE", "YATAS", "YAYLA",
-    "YKSLN", "YUNSA","CLEBI", "TUREX", "GRSEL", "PARSN", "NTGAZ", "BANVT", "MTRKS", "LINK", "OZKGY", 
+    "YKSLN", "YUNSA","CLEBI", "TUREX", "GRSEL", "PARSN", "NTGAZ", "BANVT", "MTRKS", "OZKGY", 
     "NUHCM", "BOBET"
 ]
 
@@ -289,8 +289,7 @@ def send_pro_report(strategy_title, ticker, tv_link, pro):
         f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n"
         f"📌 <b>Strateji:</b> {strategy_title}\n"
         f"🎯 <b>Hisse:</b> <a href='{tv_link}'><b>{ticker}</b></a>\n"
-        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n\n"
-        f"📊 <b>Osilatörler </b>\n"
+        f"💰 <b>Fiyat:</b> {pro['price']:.2f} ₺\n\n"
         f"💹 Günlük RSI: <b>{pro['rsi_d']:.2f}</b>\n"
         f"💹 Haftalık RSI: <b>{pro['rsi_w']:.2f}</b>\n"
         f"💪 ADX <b>{pro['adx']:.2f} ({pro['adx_status']})</b>\n"
