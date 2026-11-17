@@ -306,10 +306,12 @@ def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, m
 # ======================================================================
 # 🚀 PRO BÜLTEN KART FORMATLAYICI
 # ======================================================================
-def send_pro_report(strategy_title, ticker, tv_link, pro):
+def send_pro_report(strategy_title, ticker, tv_link, pro, badge=""):
+    badge_line = f"<b>{badge}</b>\n\n" if badge else ""
     msg = (
         f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n"
         f"📌 <b>Strateji:</b> {strategy_title}\n"
+        f"{badge_line}"
         f"🎯 <b>Hisse:</b> <a href='{tv_link}'><b>{ticker}</b></a>\n"
         f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n"
         f"⭐ <b>Skor:</b> <b>{pro['score']} / 100 ({pro['score_durum']})</b>\n\n"
@@ -320,8 +322,7 @@ def send_pro_report(strategy_title, ticker, tv_link, pro):
         f"💥 <b>{pro['money_flow']}</b> (MFI: {pro['mfi']:.1f})\n\n"
         f"⚔️ <b>RİSK & HEDEF PLANI </b>\n"
         f"🛑 <b>Stop-Loss:</b> <code>{pro['stop_loss']:.2f} ₺</code>\n"
-        f"🎯 <b>Hedef (TP1):</b> <code>{pro['target']:.2f} ₺</code>\n"
-        
+        f"🎯 <b>Hedef (TP1):</b> <code>{pro['target']:.2f} ₺</code>\n\n"
         f"<i>ℹ️ Otomatik Akıllı Sinyal Sistemi</i>"
     )
     telegram_gonder(msg)
