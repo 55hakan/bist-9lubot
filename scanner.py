@@ -367,16 +367,22 @@ def run_targeted_screener():
                 for full_ticker in batch:
                     ticker = full_ticker.replace('.IS', '')
                     
-                    try: df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
+                    try: 
+                        df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
+                        if isinstance(df_d.columns, pd.MultiIndex): df_d = df_d.droplevel(1, axis=1)
                     except: df_d = pd.DataFrame()
 
-                    try: df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
+                    try: 
+                        df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
+                        if isinstance(df_w.columns, pd.MultiIndex): df_w = df_w.droplevel(1, axis=1)
                     except: df_w = pd.DataFrame()
 
-                    try: df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
+                    try: 
+                        df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
+                        if isinstance(df_h.columns, pd.MultiIndex): df_h = df_h.droplevel(1, axis=1)
                     except: df_h = pd.DataFrame()
 
-                    # --- SAATLİK LEDA SAT KONTROLÜ (Sadece Son Mum) ---
+                    # --- SAATLİK LEDA SAT KONTROLÜ (Sadece Kesin Son Mum) ---
                     try:
                         if not df_h.empty and len(df_h) >= 30:
                             res_h = calculate_leda_indicators(df_h)
@@ -418,7 +424,7 @@ def run_targeted_screener():
                                 matrix_wm = True
                                 weekly_signals_list.append("RSI-MİST 50")
 
-                    # 4. Üçlü Kesişim (Leda + Mavilim + WMA79)
+                    # 4. Üçlü Kesişim
                     uclu_d = not df_d.empty and check_hu_cross_signal(df_d)
                     uclu_w = not df_w.empty and check_hu_cross_signal(df_w)
                     if uclu_d: daily_signals_list.append("Üçlü Kesişim")
@@ -458,7 +464,7 @@ def run_targeted_screener():
                         dip_d, orta_d = calculate_rsi_signals(df_d['Close'])
                         if dip_d or orta_d: daily_signals_list.append("Hassas Dip")
 
-                    # --- ÇİFT ONAY KONTROLÜ (Günlük + Haftalık Çakışması) ---
+                    # --- ÇİFT ONAY KONTROLÜ ---
                     is_double = (len(daily_signals_list) > 0) and (len(weekly_signals_list) > 0)
                     confluence_badge = f"⭐ ÇİFT ONAY: [{' + '.join(daily_signals_list)}] & [{' + '.join(weekly_signals_list)}]" if is_double else ""
 
@@ -533,7 +539,8 @@ def run_targeted_screener():
     finally:
         try:
             telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
-        except: pass
+        except Exception as ex:
+            print(f"Bitiş mesajı gönderilemedi: {ex}")
 
     print("\n" + "="*50)
     print("🏁 TARAMA TAMAMLANDI - SONUÇ ÖZETİ")
