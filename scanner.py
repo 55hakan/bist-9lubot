@@ -112,12 +112,8 @@ def telegram_gonder(message: str):
             print(f"Telegram Gönderim Hatası: {e}")
 
 # ======================================================================
-# 📊 MATEMATİKSEL İNDİKATÖR VE PRO HESAPLAMA MOTORU
+# 📊 MATEMATİKSEL İNDİKATÖR VE PINE SCRIPT UYUMLU MOTOR
 # ======================================================================
-def pine_rma(src, length):
-    alpha = 1 / length
-    return src.ewm(alpha=alpha, min_periods=length, adjust=False).mean()
-
 def wma(series: pd.Series, period: int) -> pd.Series:
     weights = np.arange(1, period + 1)
     return series.rolling(period).apply(lambda x: np.dot(x, weights) / weights.sum(), raw=True)
@@ -206,7 +202,7 @@ def calculate_pro_metrics(df_target, df_weekly):
         return None
 
 # ======================================================================
-# 📌 PINE SCRIPT BİREBİR LEDA (ALPHATREND + SUPERTREND) HESAPLAMASI
+# 📌 LEDA (ALPHATREND + SUPERTREND) BİREBİR PINE SCRIPT HESAPLAMASI
 # ======================================================================
 def calculate_leda_indicators(df):
     try:
@@ -216,40 +212,37 @@ def calculate_leda_indicators(df):
         hl2 = (high + low) / 2
         
         # Alphatrend
-        atr_ap = ta.sma(pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1), 14)
-        upT = low - atr_ap * 1.0
-        dnT = high + atr_ap * 1.0
-        mfi_vals = calculate_mfi(df, 14)
+        tr_ap = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
+        ATR = tr_ap.rolling(14).mean()
+        upT = low - ATR * 1.0
+        dnT = high + ATR * 1.0
         
+        mfi_vals = calculate_mfi(df, 14)
         AT = np.zeros(len(df))
         upT_v = upT.values
         dnT_v = dnT.values
         for i in range(1, len(df)):
-            if mfi_vals >= 50: # MFI kontrolü
+            if mfi_vals >= 50:
                 AT[i] = max(upT_v[i], AT[i-1]) if not np.isnan(AT[i-1]) else upT_v[i]
             else:
                 AT[i] = min(dnT_v[i], AT[i-1]) if not np.isnan(AT[i-1]) else dnT_v[i]
         df['AT'] = AT
 
         # Supertrend (Fixed)
-        atr_st = df['High'].rolling(7).apply(lambda x: ta.atr(7).iloc[-1], raw=False) # ta.atr(7) eşdeğeri
-        # Basitleştirilmiş güvenli ATR(7)
-        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        atrST = tr.rolling(7).mean()
-        
-        up_st = hl2 - 3.0 * atrST
-        dn_st = hl2 + 3.0 * atrST
+        atrST = tr_ap.rolling(7).mean() # ta.atr(7) eşdeğeri
+        up = hl2 - 3.0 * atrST
+        dn = hl2 + 3.0 * atrST
         
         trUp = np.zeros(len(df))
         trDn = np.zeros(len(df))
         trend = np.ones(len(df))
         close_v = close.values
-        up_st_v = up_st.values
-        dn_st_v = dn_st.values
+        up_v = up.values
+        dn_v = dn.values
         
         for i in range(1, len(df)):
-            trUp[i] = max(up_st_v[i], trUp[i-1]) if close_v[i-1] > trUp[i-1] else up_st_v[i]
-            trDn[i] = min(dn_st_v[i], trDn[i-1]) if close_v[i-1] < trDn[i-1] else dn_st_v[i]
+            trUp[i] = max(up_v[i], trUp[i-1]) if close_v[i-1] > trUp[i-1] else up_v[i]
+            trDn[i] = min(dn_v[i], trDn[i-1]) if close_v[i-1] < trDn[i-1] else dn_v[i]
             if close_v[i] > trDn[i-1]: trend[i] = 1
             elif close_v[i] < trUp[i-1]: trend[i] = -1
             else: trend[i] = trend[i-1]
@@ -257,12 +250,12 @@ def calculate_leda_indicators(df):
         TSL = np.where(trend == 1, trUp, trDn)
         df['TSL'] = TSL
         
-        # Pine Script: buy = ta.crossover(AT, TSL) / sell = ta.crossunder(AT, TSL)
-        at_series = pd.Series(df['AT'], index=df.index)
-        tsl_series = pd.Series(df['TSL'], index=df.index)
+        # Kesişimler (Crossover / Crossunder)
+        at_s = pd.Series(df['AT'], index=df.index)
+        tsl_s = pd.Series(df['TSL'], index=df.index)
         
-        df['buy'] = (at_series > tsl_series) & (at_series.shift(1) <= tsl_series.shift(1))
-        df['sell'] = (at_series < tsl_series) & (at_series.shift(1) >= tsl_series.shift(1))
+        df['buy'] = (at_s > tsl_s) & (at_s.shift(1) <= tsl_s.shift(1))
+        df['sell'] = (at_s < tsl_s) & (at_s.shift(1) >= tsl_s.shift(1))
         return df
     except:
         return None
@@ -273,8 +266,8 @@ def check_mavilim_signal(df: pd.DataFrame) -> bool:
     k1 = df['Close']
     k2 = wma(k1, 3); k3 = wma(k2, 5); k4 = wma(k3, 8)
     k5 = wma(k4, 13); k6 = wma(k5, 21)
-    df['K7'] = wma(k6, 34)
-    return bool((df['Close'].iloc[-1] > df['K7'].iloc[-1]) and (df['Close'].iloc[-2] <= df['K7'].iloc[-2]))
+    k7 = wma(k6, 34)
+    return bool((k7.iloc[-1] > k7.iloc[-2]) and (df['Close'].iloc[-1] > k7.iloc[-1]) and (df['Close'].iloc[-2] <= k7.iloc[-2]))
 
 def check_hu_cross_signal(df: pd.DataFrame) -> bool:
     if len(df) < 420: return False
@@ -282,8 +275,10 @@ def check_hu_cross_signal(df: pd.DataFrame) -> bool:
     hu_base1 = wma(df['Close'], 200)
     hu_base2 = wma(df['Close'], 400)
     hu_raw = (2 * hu_base1) - hu_base2
-    df['HU_Line'] = wma(hu_raw, 20)
-    return bool((df['Close'].iloc[-1] > df['HU_Line'].iloc[-1]) and (df['Close'].iloc[-2] <= df['HU_Line'].iloc[-2]))
+    hu_A = wma(hu_raw, 20)
+    # nz(hu_A, yedek formül) güvenli mekanizma
+    hu_A_fixed = hu_A.fillna(wma(2 * wma(df['Close'], 200) - wma(df['Close'], 400), 20))
+    return bool((df['Close'].iloc[-1] > hu_A_fixed.iloc[-1]) and (df['Close'].iloc[-2] <= hu_A_fixed.iloc[-2]))
 
 def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, most_ema=2, mov_short=5, mov_mid=40, mov_long=160):
     rsi_val = calculate_rsi(series_close, rsi_len)
@@ -405,7 +400,7 @@ def run_targeted_screener():
                         if not df_h.empty and len(df_h) >= 30:
                             res_h = calculate_leda_indicators(df_h)
                             if res_h is not None and "sell" in res_h.columns and bool(res_h["sell"].iloc[-1]):
-                                st_name = "⚠️ SAATLİK LEDA SAT SİNYALİ"
+                                st_name = "⚠️ SAATLİK SAT SİNYALİ"
                                 if not signal_already_sent(ticker, st_name):
                                     tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
                                     pro_h = calculate_pro_metrics(df_h, df_w)
