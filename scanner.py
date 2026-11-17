@@ -1,15 +1,16 @@
-import os
-import requests
-import pandas as pd
-import numpy as np
+import sys
 import time
+import json
+import sqlite3
+import traceback
+import numpy as np
+import pandas as pd
+import requests as req
+import os
 import yfinance as yf
-import warnings
-
-warnings.filterwarnings("ignore")
 
 # ======================================================================
-# 🔑 GÜVENLİ AYARLAR
+# ⚙️ GENEL AYARLAR VE GÜVENLİ SABİTLER
 # ======================================================================
 BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
@@ -18,16 +19,8 @@ SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 2
 
-# 🔧 TARAMA PLANI
-SCAN_PLAN = [
-    {"timeframe": "SAATLİK", "yf_interval": "60m", "period": "3mo", "tv_interval": "60"},
-    {"timeframe": "GÜNLÜK", "yf_interval": "1d", "period": "max", "tv_interval": "D"},
-    {"timeframe": "HAFTALIK", "yf_interval": "1wk", "period": "max", "tv_interval": "W"}
-]
-
-# BIST Listesi
 BIST_TICKERS = [
-    "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
+   "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
     "ASTOR", "BERA", "BIMAS", "BRSAN", "BRYAT", "BUCIM", "CCOLA", "CIMSA", "CWENE", "DOAS",
     "DOHOL", "EGEEN", "EKGYO", "ENERY", "ENJSA", "ENKAI", "EREGL", "EUPWR", "FENER", "FROTO",
     "GARAN", "GENIL", "GESAN", "GSRAY", "GUBRF", "HALKB", "HEKTS", "ISCTR", "ISMEN", "KCAER",
@@ -48,29 +41,171 @@ BIST_TICKERS = [
     "TATGD", "TBORG", "TEZOL", "TKNSA", "TMSN", "TRCAS", "TRGYO", "TSPOR", "TUKAS", "ULUSE",
     "ULUUN", "UNLU", "USAK", "VAKKO", "VBTYZ", "VERTU", "VERUS", "VESBE", "YATAS", "YAYLA",
     "YKSLN", "YUNSA","CLEBI", "TUREX", "GRSEL", "PARSN", "NTGAZ", "BANVT", "MTRKS", "LINK", "OZKGY", 
-    "NUHCM", "BOBET"
+    "NUHCM", "BOBET" 
 ]
-
 BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
 
 # ======================================================================
-# 📊 HASSAS HESAPLAMA (PINE SCRIPT UYUMLU)
+# 📩 TELEGRAM GÖNDERİM FONKSİYONU
+# ======================================================================
+def telegram_gonder(message: str):
+    for cid in TELEGRAM_CHAT_IDS:
+        if not cid: continue
+        try:
+            data = {
+                "chat_id": cid,
+                "text": message,
+                "parse_mode": "HTML",
+                "disable_web_page_preview": True
+            }
+            req.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=data, timeout=15)
+        except Exception as e:
+            print(f"Telegram Gönderim Hatası: {e}")
+
+# ======================================================================
+# 📊 MATEMATİKSEL İNDİKATÖR VE PRO HESAPLAMA MOTORU
 # ======================================================================
 def pine_rma(src, length):
     alpha = 1 / length
     return src.ewm(alpha=alpha, min_periods=length, adjust=False).mean()
 
-def calculate_indicators(df):
+def wma(series: pd.Series, period: int) -> pd.Series:
+    weights = np.arange(1, period + 1)
+    return series.rolling(period).apply(lambda x: np.dot(x, weights) / weights.sum(), raw=True)
+
+def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
+    delta = series.diff()
+    gain = (delta.where(delta > 0, 0)).ewm(alpha=1/period, adjust=False).mean()
+    loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/period, adjust=False).mean()
+    rs = gain / loss
+    return 100 - (100 / (1 + rs))
+
+def check_macd_cross(df: pd.DataFrame) -> bool:
+    if len(df) < 35: return False
+    df = df.copy()
+    exp1 = df['Close'].ewm(span=12, adjust=False).mean()
+    exp2 = df['Close'].ewm(span=26, adjust=False).mean()
+    macd = exp1 - exp2
+    signal = macd.ewm(span=9, adjust=False).mean()
+    cross_current = (macd.iloc[-1] > signal.iloc[-1]) and (macd.iloc[-2] <= signal.iloc[-2])
+    cross_previous = (macd.iloc[-2] > signal.iloc[-2]) and (macd.iloc[-3] <= signal.iloc[-3])
+    return bool(cross_current or cross_previous)
+
+def calculate_adx(df, period=14):
+    try:
+        if df is None or len(df) < (period * 2):
+            return 20.0, "ZAYIF / YATAY ⚖️"
+
+        df = df.copy()
+        high = df['High']
+        low = df['Low']
+        close = df['Close']
+
+        # True Range (TR)
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        atr = tr.ewm(alpha=1/period, adjust=False).mean()
+
+        # Plus DM & Minus DM
+        plus_dm = high.diff()
+        minus_dm = low.diff()
+
+        plus_dm = np.where((plus_dm > minus_dm) & (plus_dm > 0), plus_dm, 0.0)
+        minus_dm = np.where((minus_dm > plus_dm) & (minus_dm > 0), minus_dm, 0.0)
+
+        plus_di = 100 * pd.Series(plus_dm, index=df.index).ewm(alpha=1/period, adjust=False).mean() / (atr + 1e-10)
+        minus_di = 100 * pd.Series(minus_dm, index=df.index).ewm(alpha=1/period, adjust=False).mean() / (atr + 1e-10)
+
+        # DX ve ADX
+        sum_di = plus_di + minus_di
+        sum_di = sum_di.replace(0, 1e-10)
+        dx = 100 * abs(plus_di - minus_di) / sum_di
+        adx_series = dx.ewm(alpha=1/period, adjust=False).mean()
+
+        adx = adx_series.iloc[-1]
+
+        if np.isnan(adx):
+            adx = 20.0
+            status = "ZAYIF / YATAY ⚖️"
+        elif adx > 25:
+            status = "GÜÇLÜ TREND 🚀"
+        else:
+            status = "ZAYIF / YATAY ⚖️"
+
+        return float(adx), status
+    except Exception as e:
+        print(f"ADX Hesaplama Hatası: {e}")
+        return 20.0, "ZAYIF / YATAY ⚖️"
+
+def calculate_mfi(df, period=14):
+    try:
+        hlc3 = (df['High'] + df['Low'] + df['Close']) / 3
+        raw_money_flow = hlc3 * df['Volume']
+        positive_flow = raw_money_flow.where(hlc3 > hlc3.shift(1), 0).rolling(window=period).sum()
+        negative_flow = raw_money_flow.where(hlc3 < hlc3.shift(1), 0).rolling(window=period).sum()
+        mfi = 100 - (100 / (1 + positive_flow / (negative_flow + 1e-10)))
+        val = mfi.iloc[-1]
+        return val if not np.isnan(val) else 50.0
+    except:
+        return 50.0
+
+def calculate_pro_metrics(df_daily, df_weekly):
+    try:
+        if df_daily is None or len(df_daily) < 50: return None
+        close = df_daily['Close']
+        high = df_daily['High']
+        low = df_daily['Low']
+
+        atr_period = 14
+        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
+        atr_value = tr.rolling(window=atr_period).mean().iloc[-1]
+        current_price = close.iloc[-1]
+
+        stop_loss = current_price - (atr_value * 1.5)
+        target_price = current_price + (atr_value * 3.0)
+        risk_amt = current_price - stop_loss
+        reward_amt = target_price - current_price
+        rr_ratio = reward_amt / risk_amt if risk_amt > 0 else 0
+
+        rsi_daily = calculate_rsi(close, 14).iloc[-1]
+        rsi_weekly = calculate_rsi(df_weekly['Close'], 14).iloc[-1] if df_weekly is not None and len(df_weekly) > 14 else rsi_daily
+
+        adx_val, adx_status = calculate_adx(df_daily, 14)
+        mfi_val = calculate_mfi(df_daily, 14)
+        money_flow = "PARA GİRİŞİ ✅" if mfi_val > 50 else "PARA ÇIKIŞI ❌"
+
+        score = 85
+        score_durum = "GÜÇLÜ BOĞA 🚀"
+
+        return {
+            "price": current_price,
+            "rsi_d": rsi_daily,
+            "rsi_w": rsi_weekly,
+            "adx": adx_val,
+            "adx_status": adx_status,
+            "mfi": mfi_val,
+            "money_flow": money_flow,
+            "stop_loss": stop_loss,
+            "target": target_price,
+            "rr": rr_ratio,
+            "score": score,
+            "score_durum": score_durum
+        }
+    except Exception as e:
+        print(f"Pro Metrik Hesaplama Hatası: {e}")
+        return None
+
+def calculate_leda_indicators(df):
     try:
         if len(df) < 30: return None
         df = df.copy()
         high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
         hl2 = (high + low) / 2
         hlc3 = (high + low + close) / 3
-        
         tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        
-        # --- ALPHATREND ---
+
         atr_ap = tr.rolling(window=14).mean()
         mf = hlc3 * volume
         upper_mf = mf.where(hlc3 > hlc3.shift(1), 0.0)
@@ -78,112 +213,244 @@ def calculate_indicators(df):
         pos_mf = upper_mf.rolling(window=14).sum()
         neg_mf = lower_mf.rolling(window=14).sum()
         df['mfi'] = 100 - (100 / (1 + (pos_mf / (neg_mf + 1e-10))))
-        
+
         at = np.zeros(len(df))
         upT = (low - atr_ap * 1.0).values
         dnT = (high + atr_ap * 1.0).values
         mfi_vals = df['mfi'].values
-        
+
         for i in range(1, len(df)):
             if mfi_vals[i] >= 50:
                 at[i] = max(upT[i], at[i-1]) if not np.isnan(at[i-1]) else upT[i]
             else:
                 at[i] = min(dnT[i], at[i-1]) if not np.isnan(at[i-1]) else dnT[i]
         df['AlphaTrend'] = at
-        
-        # --- SUPERTREND ---
+
         atr_st = pine_rma(tr, 7)
         up_st = (hl2 - 3.0 * atr_st).values
         dn_st = (hl2 + 3.0 * atr_st).values
-        
         trUp = np.zeros(len(df))
         trDn = np.zeros(len(df))
         tsl = np.zeros(len(df))
         trend = np.ones(len(df))
         close_vals = close.values
-        
+
         for i in range(1, len(df)):
             trUp[i] = max(up_st[i], trUp[i-1]) if close_vals[i-1] > trUp[i-1] else up_st[i]
             trDn[i] = min(dn_st[i], trDn[i-1]) if close_vals[i-1] < trDn[i-1] else dn_st[i]
-            if close_vals[i] > trDn[i-1]:
-                trend[i] = 1
-            elif close_vals[i] < trUp[i-1]:
-                trend[i] = -1
-            else:
-                trend[i] = trend[i-1]
+            if close_vals[i] > trDn[i-1]: trend[i] = 1
+            elif close_vals[i] < trUp[i-1]: trend[i] = -1
+            else: trend[i] = trend[i-1]
             tsl[i] = trUp[i] if trend[i] == 1 else trDn[i]
-            
         df['TSL'] = tsl
-        df['Trend'] = np.where(df['AlphaTrend'] > df['TSL'], 'AL', 'SAT')
+        df['buy'] = (df['AlphaTrend'] > df['TSL']) & (df['AlphaTrend'].shift(1) <= df['TSL'].shift(1))
         return df
     except:
         return None
 
-# ======================================================================
-# 🚀 TARAMA MOTORU
-# ======================================================================
-def run_screener():
-    print(f"🚀 LEDA Taraması Başlatıldı...")
-    for plan in SCAN_PLAN:
-        all_hits = []
-        print(f"🔎 {plan['timeframe']} taranıyor...")
-        for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
-            batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
-            try:
-                data = yf.download(batch, interval=plan['yf_interval'], period=plan['period'],
-                                     progress=False, group_by="ticker", auto_adjust=True, threads=True)
-            except Exception as e:
-                print(f"Hata: {e}")
-                continue
-            
-            for ticker_full in batch:
-                try:
-                    if len(batch) > 1:
-                        if ticker_full not in data.columns.levels[0]: continue
-                        df = data[ticker_full].dropna()
-                    else:
-                        df = data.dropna()
-                        
-                    if df.empty or len(df) < 30: continue
-                    
-                    df = calculate_indicators(df)
-                    if df is None: continue
-                    
-                    son_durum = df['Trend'].iloc[-1]
-                    onceki_durum = df['Trend'].iloc[-2]
-                    
-                    if son_durum != onceki_durum:
-                        ticker_clean = ticker_full.replace(".IS", "")
-                        last_price = df["Close"].iloc[-1]
-                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST:{ticker_clean}&interval={plan['tv_interval']}"
-                        
-                        msg_line = f"🔵 <a href='{tv_link}'><b>{ticker_clean}</b></a> ({last_price:.2f} TL) | <b>{son_durum}</b>"
-                        all_hits.append(msg_line)
-                except Exception:
-                    continue
-            time.sleep(DELAY_BETWEEN_BATCHES)
-            
-        # Sinyal olsun veya olmasın her periyot için bilgi raporu gönderilir
-        if all_hits:
-            header = f"<b>🔥 {plan['timeframe']} SİNYAL DEĞİŞİKLİĞİ</b>\n\n"
-            for j in range(0, len(all_hits), 20):
-                send_telegram(header + "\n".join(all_hits[j:j+20]))
-        else:
-            # Değişiklik yoksa sistemin çalıştığını bildiren sakin durum mesajı
-            info_msg = f"ℹ️ <b>{plan['timeframe']} TARAMA RAPORU</b>\n--------------------------------------\nHer şey normal, trend devam ediyor. Sinyal değiştiren hisse bulunamadı."
-            send_telegram(info_msg)
+def check_hu_cross_signal(df: pd.DataFrame) -> bool:
+    len1, len2, smoothLen = 200, 400, 20
+    if len(df) < len2 + smoothLen + 2: return False
+    df = df.copy()
+    hu_base1 = wma(df['Close'], len1)
+    hu_base2 = wma(df['Close'], len2)
+    hu_raw = (2 * hu_base1) - hu_base2
+    df['HU_Line'] = wma(hu_raw, smoothLen)
+    df['cross_up'] = (df['Close'] > df['HU_Line']) & (df['Close'].shift(1) <= df['HU_Line'].shift(1))
+    return bool(df['cross_up'].iloc[-1])
+
+def check_mavilim_signal(df: pd.DataFrame) -> bool:
+    if len(df) < 55: return False
+    df = df.copy()
+    k1 = df['Close']
+    k2 = wma(k1, 3); k3 = wma(k2, 5); k4 = wma(k3, 8)
+    k5 = wma(k4, 13); k6 = wma(k5, 21)
+    df['K7'] = wma(k6, 34)
+    df['cross_up'] = (df['Close'] > df['K7']) & (df['Close'].shift(1) <= df['K7'].shift(1))
+    return bool(df['cross_up'].iloc[-1])
+
+def check_triple_confluence_signal(df: pd.DataFrame) -> bool:
+    if len(df) < 85: return False
+    df = df.copy()
+    df = calculate_leda_indicators(df)
+    if df is None: return False
+    
+    k1 = df['Close']
+    k2 = wma(k1, 3); k3 = wma(k2, 5); k4 = wma(k3, 8)
+    k5 = wma(k4, 13); k6 = wma(k5, 21)
+    df['Mavilim'] = wma(k6, 34)
+    df['WMA79'] = wma(df['Close'], 79)
+    
+    leda_buy = df["buy"].iloc[-1]
+    mavilim_cross = (df['Close'].iloc[-1] > df['Mavilim'].iloc[-1]) and (df['Close'].iloc[-2] <= df['Mavilim'].iloc[-2])
+    wma79_cross = (df['Close'].iloc[-1] > df['WMA79'].iloc[-1]) and (df['Close'].iloc[-2] <= df['WMA79'].iloc[-2])
+    return bool(leda_buy and mavilim_cross and wma79_cross)
+
+def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, most_ema=2, mov_short=5, mov_mid=40, mov_long=160):
+    rsi_val = calculate_rsi(series_close, rsi_len)
+    sma_rsi = rsi_val.rolling(window=most_sma).mean()
+    base = sma_rsi.ewm(span=most_ema, adjust=False).mean()
+    mov5 = base.ewm(span=mov_short, adjust=False).mean()
+    mov40 = base.ewm(span=mov_mid, adjust=False).mean()
+    mov160 = base.ewm(span=mov_long, adjust=False).mean()
+
+    bm_cross = (mov40.iloc[-1] > mov160.iloc[-1] and mov40.iloc[-2] <= mov160.iloc[-2]) or (mov40.iloc[-2] > mov160.iloc[-2] and mov40.iloc[-3] <= mov160.iloc[-3])
+    near_50 = mov40.iloc[-1] >= 48 or mov40.iloc[-2] >= 48
+    blue_cross_red_above_50 = bm_cross and near_50
+
+    return {
+        "base": base, "mov40": mov40, "mov160": mov160,
+        "blue_cross_red_above_50": blue_cross_red_above_50
+    }
 
 # ======================================================================
-# 📩 GÖNDERİM
+# 🚀 PRO BÜLTEN KART FORMATLAYICI
 # ======================================================================
-def send_telegram(msg):
-    for cid in TELEGRAM_CHAT_IDS:
-        if not cid or not BOT_TOKEN:
-            continue
+def send_pro_report(strategy_title, ticker, tv_link, pro):
+    msg = (
+        f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n"
+        f"📌 <b>Strateji:</b> {strategy_title}\n"
+        f"🎯 <b>Hisse:</b> <a href='{tv_link}'><b>{ticker}</b></a>\n"
+        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n"
+        f"⭐ <b>Skor:</b> <b>{pro['score']} / 100 ({pro['score_durum']})</b>\n\n"
+        f"📊 <b>Osilatörler </b>\n"
+        f"💹 Günlük RSI: <b>{pro['rsi_d']:.2f}</b>\n"
+        f"💹 Haftalık RSI: <b>{pro['rsi_w']:.2f}</b>\n"
+        f"💪 ADX <b>{pro['adx']:.2f} ({pro['adx_status']})</b>\n"
+        f"💥 <b>{pro['money_flow']}</b> (MFI: {pro['mfi']:.1f})\n\n"
+        f"⚔️ <b>RİSK & HEDEF PLANI </b>\n"
+        f"🛑 <b>Stop-Loss:</b> <code>{pro['stop_loss']:.2f} ₺</code>\n"
+        f"🎯 <b>Hedef (TP1):</b> <code>{pro['target']:.2f} ₺</code>\n"
+        
+        f"<i>ℹ️ Otomatik Akıllı Sinyal Sistemi</i>"
+    )
+    telegram_gonder(msg)
+
+# ======================================================================
+# 🚀 ANA TARAMA MOTORU (DİNAMİK LİNK, PERİYOT VE ÇİFTE ONAY GÜNCELLENMİŞ HALİ)
+# ======================================================================
+def run_targeted_screener():
+    print(f"🚀 Seçilen Strateji Çalıştırılıyor: {SELECTED_STRATEGY}")
+    telegram_gonder(
+        f"🎯 <b>Emekli Sinyal Tarama Başlatıldı.</b>\n"
+        f"📊 Mod: <b>{SELECTED_STRATEGY}</b>\n"
+        f"🤖 Bot için <b>6 Özel Strateji</b> aktif.\n"
+        f"🔍 Kendi kullandığınız indikatörler ile kontrol ediniz.\n"
+        f"📰 Güncel piyasa verilerini ve haberleri takip etmeyi unutmayın.\n"
+        f"⚠️ <i>Sinyaller bilgi amaçlıdır, Yatırım Tavsiyesi Değildir.</i>"
+    )
+
+    s1_uzun_ralli, s4_uclu_kesisim = [], []
+    s5_leda_d, s6_leda_w, s7_hu_d, s8_mav_w = [], [], [], []
+
+    for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
+        batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
         try:
-            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                          data={"chat_id": cid, "text": msg, "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=15)
-        except: pass
+            data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
+            data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
+
+            for full_ticker in batch:
+                ticker = full_ticker.replace('.IS', '')
+                # DİKKAT: Baştaki periyotsuz sabit tv_link satırı BURADAN SİLİNMİŞTİR.
+                # Böylece alt kısımlarda tanımlanan &interval=D veya &interval=W geçerli olur.
+
+                try: df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
+                except: df_d = pd.DataFrame()
+
+                try: df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
+                except: df_w = pd.DataFrame()
+
+                # 1. Uzun Vade Ralli (Günlük)
+                if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"] and not df_d.empty and len(df_d) >= 180:
+                    res = calculate_rsi_most_matrix(df_d['Close'])
+                    if res["blue_cross_red_above_50"]:
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                        pro_d = calculate_pro_metrics(df_d, df_w)
+                        if pro_d: s1_uzun_ralli.append((ticker, tv_link, pro_d, ""))
+
+                # 2. Üçlü Kesişim
+                if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]:
+                    if not df_d.empty and check_triple_confluence_signal(df_d):
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                        pro_d = calculate_pro_metrics(df_d, df_w)
+                        if pro_d: s4_uclu_kesisim.append((ticker, tv_link, pro_d, ""))
+                    elif not df_w.empty and check_triple_confluence_signal(df_w):
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                        pro_w = calculate_pro_metrics(df_w, df_w)
+                        if pro_w: s4_uclu_kesisim.append((ticker, tv_link, pro_w, ""))
+
+                # LEDA KONTROLÜ (Günlük ve Haftalık Eşzamanlı Durum Analizi)
+                leda_d_ok = False
+                leda_w_ok = False
+
+                if not df_d.empty and len(df_d) >= 35:
+                    res_d = calculate_leda_indicators(df_d)
+                    if res_d is not None and res_d["buy"].iloc[-1] and check_macd_cross(df_d):
+                        leda_d_ok = True
+
+                if not df_w.empty and len(df_w) >= 35:
+                    res_w = calculate_leda_indicators(df_w)
+                    if res_w is not None and res_w["buy"].iloc[-1] and check_macd_cross(df_w):
+                        leda_w_ok = True
+
+                # Çifte Onay Durumu (Hem Günlük Hem Haftalık Leda Sinyali)
+                if leda_d_ok and leda_w_ok:
+                    tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                    pro_w = calculate_pro_metrics(df_w, df_w) # Haftalık büyük resim ATR baz alınır
+                    if pro_w:
+                        badge_text = "⭐ ÇİFTE ZAMAN DİLİMİ ONAYI (GÜNLÜK + HAFTALIK)"
+                        s5_leda_d.append((ticker, tv_link, pro_w, badge_text))
+                        s6_leda_w.append((ticker, tv_link, pro_w, badge_text))
+                else:
+                    if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"] and leda_d_ok:
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                        pro_d = calculate_pro_metrics(df_d, df_w)
+                        if pro_d: s5_leda_d.append((ticker, tv_link, pro_d, ""))
+
+                    if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"] and leda_w_ok:
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                        pro_w = calculate_pro_metrics(df_w, df_w)
+                        if pro_w: s6_leda_w.append((ticker, tv_link, pro_w, ""))
+
+                # 5. HU Günlük (Günlük)
+                if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"] and not df_d.empty and check_hu_cross_signal(df_d) and check_macd_cross(df_d):
+                    tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                    pro_d = calculate_pro_metrics(df_d, df_w)
+                    if pro_d: s7_hu_d.append((ticker, tv_link, pro_d, ""))
+
+                # 6. Mavilim Haftalık (Haftalık)
+                if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"] and not df_w.empty and check_mavilim_signal(df_w) and check_macd_cross(df_w):
+                    tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                    pro_w = calculate_pro_metrics(df_w, df_w)
+                    if pro_w: s8_mav_w.append((ticker, tv_link, pro_w, ""))
+
+        except Exception as e:
+            print(f"Batch Hatası: {e}")
+            traceback.print_exc()
+
+        time.sleep(DELAY_BETWEEN_BATCHES)
+
+    def report_strategy(title, items):
+        if items:
+            for item in items:
+                # Tuple yapıları (ticker, tv_link, pro, badge) şeklinde kontrol edilir
+                if len(item) == 4:
+                    ticker, tv_link, pro, badge = item
+                    send_pro_report(title, ticker, tv_link, pro, badge)
+                else:
+                    ticker, tv_link, pro = item[:3]
+                    send_pro_report(title, ticker, tv_link, pro, "")
+        else:
+            telegram_gonder(f"📌 <b>Strateji:</b> <b>{title}</b>\n❌ Bu taramada koşulu sağlayan hisse yok.")
+
+    if SELECTED_STRATEGY in ["Hepsi", "Uzun Vade Ralli"]: report_strategy("1️⃣ RALLİ BAŞLANGIÇ", s1_uzun_ralli)
+    if SELECTED_STRATEGY in ["Hepsi", "Uclu Kesisim"]: report_strategy("2️⃣ ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
+    if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk"]: report_strategy("3️⃣ ÖZEL GÜNLÜK", s5_leda_d)
+    if SELECTED_STRATEGY in ["Hepsi", "Leda Haftalik"]: report_strategy("4️⃣ ÖZEL HAFTALIK", s6_leda_w)
+    if SELECTED_STRATEGY in ["Hepsi", "HU Gunluk"]: report_strategy("5️⃣ HU GÜNLÜK", s7_hu_d)
+    if SELECTED_STRATEGY in ["Hepsi", "Mavilim Haftalik"]: report_strategy("6️⃣ MAVİLİM HAFTALIK", s8_mav_w)
+
+    telegram_gonder("🏁 Pro Tarama Tamamlandı.")
 
 if __name__ == "__main__":
-    run_screener()
+    run_targeted_screener()
