@@ -90,10 +90,8 @@ def mark_signal_sent(ticker: str, strategy: str):
     conn.close()
 
 # ======================================================================
-# 📩 TELEGRAM GÖNDERİM FONKSİYONU
+# 📩 TELEGRAM GÖNDERİM FONKSİYONU (429 Flood Koruma Mekanizmalı)
 # ======================================================================
-import time
-
 def telegram_gonder(message: str):
     if not BOT_TOKEN or not TELEGRAM_CHAT_IDS or not TELEGRAM_CHAT_IDS[0]:
         print("⚠️ Telegram Token veya Chat ID eksik! Mesaj gönderilemedi.")
@@ -112,7 +110,7 @@ def telegram_gonder(message: str):
                 resp = req.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=data, timeout=15)
                 
                 if resp.status_code == 200:
-                    time.sleep(1.2) # Telegram Flood koruması için mesajlar arası 1.2 saniye nefes alma payı
+                    time.sleep(1.2) # Mesajlar arası flood sınırı önlemi
                     break
                 elif resp.status_code == 429:
                     try:
@@ -198,16 +196,8 @@ def calculate_mfi(df, period=14):
 def calculate_pro_metrics(df_target, df_weekly):
     try:
         if df_target is None or len(df_target) < 50: return None
-        close, high, low = df_target['Close'], df_target['High'], df_target['Low']
-        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        atr_value = tr.rolling(window=14).mean().iloc[-1]
+        close = df_target['Close']
         current_price = close.iloc[-1]
-        
-        stop_loss = current_price - (atr_value * 1.5)
-        target_price = current_price + (atr_value * 3.0)
-        risk_amt = current_price - stop_loss
-        reward_amt = target_price - current_price
-        rr_ratio = reward_amt / risk_amt if risk_amt > 0 else 0
         
         rsi_daily = calculate_rsi(close, 14).iloc[-1]
         rsi_weekly = calculate_rsi(df_weekly['Close'], 14).iloc[-1] if df_weekly is not None and len(df_weekly) > 14 else rsi_daily
@@ -216,13 +206,9 @@ def calculate_pro_metrics(df_target, df_weekly):
         mfi_val = calculate_mfi(df_target, 14)
         money_flow = "PARA GİRİŞİ ✅" if mfi_val > 50 else "PARA ÇIKIŞI ❌"
         
-        score = 85
-        score_durum = "GÜÇLÜ BOĞA 🚀"
         return {
             "price": current_price, "rsi_d": rsi_daily, "rsi_w": rsi_weekly,
-            "adx": adx_val, "adx_status": adx_status, "mfi": mfi_val,
-            "money_flow": money_flow, "stop_loss": stop_loss, "target": target_price, "rr": rr_ratio,
-            "score": score, "score_durum": score_durum
+            "adx": adx_val, "adx_status": adx_status, "mfi": mfi_val, "money_flow": money_flow
         }
     except:
         return None
@@ -360,7 +346,7 @@ def calculate_rsi_signals(series_close: pd.Series):
     return dip_signal, orta_signal
 
 # ======================================================================
-# 🚀 PRO BÜLTEN KART FORMATLAYICI
+# 🚀 PRO BÜLTEN KART FORMATLAYICI (Stop, TP ve Skor Kaldırıldı)
 # ======================================================================
 def send_pro_report(strategy_title, ticker, tv_link, pro, badge=""):
     badge_line = f"<b>{badge}</b>\n\n" if badge else ""
@@ -369,16 +355,12 @@ def send_pro_report(strategy_title, ticker, tv_link, pro, badge=""):
         f"📌 <b>Strateji:</b> {strategy_title}\n"
         f"{badge_line}"
         f"🎯 <b>Hisse:</b> <a href='{tv_link}'><b>{ticker}</b></a>\n"
-        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n"
-        f"⭐ <b>Skor:</b> <b>{pro['score']} / 100 ({pro['score_durum']})</b>\n\n"
+        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n\n"
         f"📊 <b>Osilatörler </b>\n"
         f"💹 Günlük RSI: <b>{pro['rsi_d']:.2f}</b>\n"
         f"💹 Haftalık RSI: <b>{pro['rsi_w']:.2f}</b>\n"
-        f"💪 ADX <b>{pro['adx']:.2f} ({pro['adx_status']})</b>\n"
+        f"💪 ADX: <b>{pro['adx']:.2f} ({pro['adx_status']})</b>\n"
         f"💥 <b>{pro['money_flow']}</b> (MFI: {pro['mfi']:.1f})\n\n"
-        f"⚔️ <b>RİSK & HEDEF PLANI </b>\n"
-        f"🛑 <b>Stop-Loss:</b> <code>{pro['stop_loss']:.2f} ₺</code>\n"
-        f"🎯 <b>Hedef (TP1):</b> <code>{pro['target']:.2f} ₺</code>\n\n"
         f"<i>ℹ️ Otomatik Akıllı Sinyal Sistemi</i>"
     )
     telegram_gonder(msg)
@@ -392,7 +374,10 @@ def run_targeted_screener():
     telegram_gonder(
         f"🎯 <b>Emekli Sinyal Tarama Başlatıldı.</b>\n"
         f"📊 Mod: <b>{SELECTED_STRATEGY}</b>\n"
-        f"🤖 Bot Aktif ve Taramalar Gerçekleştiriliyor...\n"
+        f"🤖 Bot için <b>6 Özel Strateji</b> aktif.\n"
+        f"🔍 Kendi kullandığınız indikatörler ile kontrol ediniz.\n"
+        f"📰 Güncel piyasa verilerini ve haberleri takip etmeyi unutmayın.\n"
+        f"🤖 Bot aktif ve tarama gerçekleştiriliyor...\n"
         f"⚠️ <i>Sinyaller bilgi amaçlıdır, Yatırım Tavsiyesi Değildir.</i>"
     )
 
@@ -414,14 +399,12 @@ def run_targeted_screener():
     
     s13_hassas_dip = []
     s14_hassas_orta = []
-    s_hourly_sell = []
 
     for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
         batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
         try:
             data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
             data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
-            data_1h = yf.download(batch, interval="1h", period="60d", progress=False, group_by='ticker', auto_adjust=True, threads=False)
 
             for full_ticker in batch:
                 ticker = full_ticker.replace('.IS', '')
@@ -432,24 +415,11 @@ def run_targeted_screener():
                 try: df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
                 except: df_w = pd.DataFrame()
 
-                try: df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
-                except: df_h = pd.DataFrame()
+                # Çifte Onay Kontrol Bayrakları
+                leda_d_signal = False
+                leda_w_signal = False
 
-                # 1. Saatlik Leda Sat Sinyali
-                try:
-                    if not df_h.empty and len(df_h) >= 30:
-                        res_h = calculate_leda_indicators(df_h)
-                        if res_h is not None and "sell" in res_h.columns and bool(res_h["sell"].iloc[-1]):
-                            st_name = "⚠️ SAATLİK LEDA SAT SİNYALİ"
-                            if not signal_already_sent(ticker, st_name):
-                                tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
-                                pro_h = calculate_pro_metrics(df_h, df_w)
-                                if pro_h:
-                                    s_hourly_sell.append((ticker, tv_link_h, pro_h, st_name))
-                                    mark_signal_sent(ticker, st_name)
-                except: pass
-
-                # 2. Uzun Vade Ralli
+                # 1. Uzun Vade Ralli
                 if not df_d.empty and len(df_d) >= 180:
                     res_r = calculate_rsi_most_matrix(df_d['Close'])
                     if res_r["blue_cross_red_above_50"]:
@@ -459,7 +429,7 @@ def run_targeted_screener():
                             pro_d = calculate_pro_metrics(df_d, df_w)
                             if pro_d: s1_uzun_ralli.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_name)
 
-                # 3. Base 30
+                # 2. Base 30
                 if not df_d.empty and len(df_d) >= 30:
                     b_res = calculate_rsi_most_matrix(df_d['Close'])
                     if b_res["yellow_cross_30"]:
@@ -495,18 +465,17 @@ def run_targeted_screener():
                         pro_w = calculate_pro_metrics(df_w, df_w)
                         if pro_w: s4_uclu_kesisim.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_name)
 
-                # LEDA KONTROLLERİ (Sade ve MACD Ayrı Ayrı)
+                # LEDA KONTROLLERİ (Sade, MACD ve Çifte Onay Kontrolü)
                 if not df_d.empty and len(df_d) >= 35:
                     res_leda_d = calculate_leda_indicators(df_d)
                     if res_leda_d is not None and res_leda_d["buy"].iloc[-1]:
-                        # Sade Günlük Leda
+                        leda_d_signal = True
                         st_sade = "📊 LEDA GÜNLÜK (SADE)"
                         if not signal_already_sent(ticker, st_sade):
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                             pro_d = calculate_pro_metrics(df_d, df_w)
                             if pro_d: s5_leda_d_sade.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_sade)
                         
-                        # MACD Onaylı Günlük Leda
                         if check_macd_cross(df_d):
                             st_macd = "📈 LEDA GÜNLÜK + MACD"
                             if not signal_already_sent(ticker, st_macd):
@@ -517,14 +486,13 @@ def run_targeted_screener():
                 if not df_w.empty and len(df_w) >= 35:
                     res_leda_w = calculate_leda_indicators(df_w)
                     if res_leda_w is not None and res_leda_w["buy"].iloc[-1]:
-                        # Sade Haftalık Leda
+                        leda_w_signal = True
                         st_sade_w = "📊 LEDA HAFTALIK (SADE)"
                         if not signal_already_sent(ticker, st_sade_w):
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                             pro_w = calculate_pro_metrics(df_w, df_w)
                             if pro_w: s7_leda_w_sade.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_sade_w)
                         
-                        # MACD Onaylı Haftalık Leda
                         if check_macd_cross(df_w):
                             st_macd_w = "📈 LEDA HAFTALIK + MACD"
                             if not signal_already_sent(ticker, st_macd_w):
@@ -532,7 +500,17 @@ def run_targeted_screener():
                                 pro_w = calculate_pro_metrics(df_w, df_w)
                                 if pro_w: s8_leda_w_macd.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_macd_w)
 
-                # HU KONTROLLERİ (Sade ve MACD Ayrı Ayrı - Günlük)
+                # ⭐ ÇİFTE ONAY KONTROLÜ (Hem Günlük Hem Haftalık Leda Al Sinyali)
+                if leda_d_signal and leda_w_signal:
+                    st_double = "⭐ ÇİFTE ZAMAN DİLİMİ ONAYI (GÜNLÜK + HAFTALIK LEDA)"
+                    if not signal_already_sent(ticker, st_double):
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                        pro_w = calculate_pro_metrics(df_w, df_w)
+                        if pro_w:
+                            send_pro_report(st_double, ticker, tv_link, pro_w, "⭐ GÜNLÜK & HAFTALIK ÇİFTE ONAY")
+                            mark_signal_sent(ticker, st_double)
+
+                # HU KONTROLLERİ (Sade ve MACD - Günlük)
                 if not df_d.empty and check_hu_cross_signal(df_d):
                     st_hu_sade = "💎 HU GÜNLÜK (SADE)"
                     if not signal_already_sent(ticker, st_hu_sade):
@@ -547,7 +525,7 @@ def run_targeted_screener():
                             pro_d = calculate_pro_metrics(df_d, df_w)
                             if pro_d: s10_hu_d_macd.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_hu_macd)
 
-                # MAVİLİM KONTROLLERİ (Sade ve MACD Ayrı Ayrı - Haftalık)
+                # MAVİLİM KONTROLLERİ (Sade ve MACD - Haftalık)
                 if not df_w.empty and check_mavilim_signal(df_w):
                     st_mav_sade = "🌊 MAVİLİM HAFTALIK (SADE)"
                     if not signal_already_sent(ticker, st_mav_sade):
@@ -594,7 +572,6 @@ def run_targeted_screener():
             telegram_gonder(msg)
 
     # Raporlama Sıralaması
-    report_strategy("⚠️ SAATLİK LEDA SAT SİNYALİ", s_hourly_sell)
     report_strategy("💎 1. UZUN VADE RALLİ", s1_uzun_ralli)
     report_strategy("🟡 2. RSI-MOST BASE 30", s2_base_30)
     report_strategy("📅 3. MATRIX ORTA HAT 50", s3_matrix_wm)
