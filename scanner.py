@@ -1,9 +1,9 @@
-
 import sys
 import time
 import json
 import sqlite3
 import traceback
+import os
 import numpy as np
 import pandas as pd
 import requests as req
@@ -18,8 +18,10 @@ TELEGRAM_CHAT_IDS = [CHAT_ID] if CHAT_ID else []
 SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 2
+DELAY_BEFORE_NEXT_CYCLE = 3600  # 1 Saat bekleme süresi tanımlandı
 
-BIST_TICKERS = ["AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
+BIST_TICKERS = [
+    "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
     "ASTOR", "BERA", "BIMAS", "BRSAN", "BRYAT", "BUCIM", "CCOLA", "CIMSA", "CWENE", "DOAS",
     "DOHOL", "EGEEN", "EKGYO", "ENERY", "ENJSA", "ENKAI", "EREGL", "EUPWR", "FENER", "FROTO",
     "GARAN", "GENIL", "GESAN", "GSRAY", "GUBRF", "HALKB", "HEKTS", "ISCTR", "ISMEN", "KCAER",
@@ -40,7 +42,9 @@ BIST_TICKERS = ["AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "A
     "TATGD", "TBORG", "TEZOL", "TKNSA", "TMSN", "TRCAS", "TRGYO", "TSPOR", "TUKAS", "ULUSE",
     "ULUUN", "UNLU", "USAK", "VAKKO", "VBTYZ", "VERTU", "VERUS", "VESBE", "YATAS", "YAYLA",
     "YKSLN", "YUNSA","CLEBI", "TUREX", "GRSEL", "PARSN", "NTGAZ", "BANVT", "MTRKS", "LINK", "OZKGY", 
-    "NUHCM", "BOBET"]
+    "NUHCM", "BOBET"
+]
+
 BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
 
 # ======================================================================
@@ -251,12 +255,10 @@ def calculate_rsi_signals(series_close: pd.Series):
     cond_red_near_50 = (mov160.iloc[-1] < 50) and (mov160.iloc[-1] >= 40)
     cond_blue_below_red = mov40.iloc[-1] < mov160.iloc[-1]
 
-    # Dip
     yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
     yellow_bottom = (base.iloc[-1] <= 40) or (base.iloc[-2] <= 40)
     dip_signal = (yellow_cross_30 or (yellow_cross_green and yellow_bottom)) and cond_red_near_50 and cond_blue_below_red
 
-    # Orta
     yellow_mid = (40 <= base.iloc[-1] <= 45) or (40 <= base.iloc[-2] <= 45)
     orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
 
@@ -272,7 +274,6 @@ def run_all_9_screeners():
     while True:
         print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Tüm 9 Strateji Taranıyor...")
         
-        # 9 Ayrı Sinyal Listesi
         s1_uzun_ralli = []
         s2_base_30 = []
         s3_matrix_wm = []
@@ -328,6 +329,7 @@ def run_all_9_screeners():
                     if not df_d.empty and check_triple_confluence_signal(df_d):
                         price = df_d['Close'].iloc[-1]
                         s4_uclu_kesisim.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺ - Günlük)")
+
                     if not df_w.empty and check_triple_confluence_signal(df_w):
                         price = df_w['Close'].iloc[-1]
                         s4_uclu_kesisim.append(f"• {make_tv_link(ticker, 'W')} ({price:.2f}₺ - Haftalık)")
@@ -370,7 +372,6 @@ def run_all_9_screeners():
             
             time.sleep(DELAY_BETWEEN_BATCHES)
 
-        # 📩 RAPORLAMA FONKSİYONU
         def report(title, items):
             if items:
                 telegram_gonder(f"<b>{title}</b>\n--------------------------------------\n" + "\n".join(items))
