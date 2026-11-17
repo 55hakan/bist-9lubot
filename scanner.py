@@ -6,6 +6,7 @@ import traceback
 import yfinance as yf
 import numpy as np
 import sys
+import os
 from typing import List
 
 # ======================================================================
@@ -86,8 +87,8 @@ def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
     return 100 - (100 / (1 + rs))
 
 def calculate_rsi_most_matrix(series_close: pd.Series, 
-                              rsi_len=14, most_sma=3, most_ema=2, 
-                              mov_short=5, mov_mid=40, mov_long=160):
+                            rsi_len=14, most_sma=3, most_ema=2, 
+                            mov_short=5, mov_mid=40, mov_long=160):
     
     # 1. RSI ve MOST (Base/Sarı Çizgi)
     rsi_val = calculate_rsi(series_close, rsi_len)
@@ -120,7 +121,7 @@ def calculate_rsi_most_matrix(series_close: pd.Series,
 # 🚀 GÜNLÜK TARAMA MOTORU
 # ======================================================================
 def process_daily_scans(df_symbols: List[str]):
-    print(f"   -> Uzun Vade Ralli Taraması başlatılıyor...")
+    print(f"    -> Uzun Vade Ralli Taraması başlatılıyor...")
     batch_size = 50
     for i in range(0, len(df_symbols), batch_size):
         batch = [f"{s}.IS" for s in df_symbols[i:i+batch_size]]
