@@ -1,9 +1,9 @@
+
 import sys
 import time
 import json
 import sqlite3
 import traceback
-import os
 import numpy as np
 import pandas as pd
 import requests as req
@@ -18,10 +18,8 @@ TELEGRAM_CHAT_IDS = [CHAT_ID] if CHAT_ID else []
 SELECTED_STRATEGY = os.environ.get("SELECTED_STRATEGY", "Hepsi")
 BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 2
-DELAY_BEFORE_NEXT_CYCLE = 3600  # 1 Saat bekleme süresi eklendi
 
-BIST_TICKERS = [
-    "AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
+BIST_TICKERS = ["AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "ANSGR", "ARCLK", "ASELS",
     "ASTOR", "BERA", "BIMAS", "BRSAN", "BRYAT", "BUCIM", "CCOLA", "CIMSA", "CWENE", "DOAS",
     "DOHOL", "EGEEN", "EKGYO", "ENERY", "ENJSA", "ENKAI", "EREGL", "EUPWR", "FENER", "FROTO",
     "GARAN", "GENIL", "GESAN", "GSRAY", "GUBRF", "HALKB", "HEKTS", "ISCTR", "ISMEN", "KCAER",
@@ -42,9 +40,7 @@ BIST_TICKERS = [
     "TATGD", "TBORG", "TEZOL", "TKNSA", "TMSN", "TRCAS", "TRGYO", "TSPOR", "TUKAS", "ULUSE",
     "ULUUN", "UNLU", "USAK", "VAKKO", "VBTYZ", "VERTU", "VERUS", "VESBE", "YATAS", "YAYLA",
     "YKSLN", "YUNSA","CLEBI", "TUREX", "GRSEL", "PARSN", "NTGAZ", "BANVT", "MTRKS", "LINK", "OZKGY", 
-    "NUHCM", "BOBET"
-]
-
+    "NUHCM", "BOBET"]
 BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
 
 # ======================================================================
@@ -97,8 +93,13 @@ def telegram_gonder(message: str):
         except Exception as e:
             print(f"Telegram Gönderim Hatası: {e}")
 
+def make_tv_link(ticker: str, interval: str = "D") -> str:
+    """TradingView grafik bağlantısını hisse ismine gömer (D, W, M)."""
+    url = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval={interval}"
+    return f"<a href='{url}'><b>{ticker}</b></a>"
+
 # ======================================================================
-# 📊 MATEMATİKSEL İNDİKATÖR VE YARDIMCI FONKSİYONLAR
+# 📊 MATEMATİKSEL İNDİKATÖR FONKSİYONLARI
 # ======================================================================
 def pine_rma(src, length):
     alpha = 1 / length
@@ -141,7 +142,7 @@ def calculate_leda_indicators(df):
         lower_mf = mf.where(hlc3 < hlc3.shift(1), 0.0)
         pos_mf = upper_mf.rolling(window=14).sum()
         neg_mf = lower_mf.rolling(window=14).sum()
-        df['mfi'] = 100 - (100 / (1 + (pos_mf / (neg_mf + 1e-10))))
+        df['mfi'] = 100 - (100 / (1 + (pos_mf / neg_mf)))
         
         at = np.zeros(len(df))
         upT = (low - atr_ap * 1.0).values
@@ -224,6 +225,7 @@ def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, m
     mov160 = base.ewm(span=mov_long, adjust=False).mean()
 
     yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
+    blue_cross_50 = (mov40.iloc[-1] > 50 and mov40.iloc[-2] <= 50) or (mov40.iloc[-2] > 50 and mov40.iloc[-3] <= 50)
     bm_cross = (mov40.iloc[-1] > mov160.iloc[-1] and mov40.iloc[-2] <= mov160.iloc[-2]) or (mov40.iloc[-2] > mov160.iloc[-2] and mov40.iloc[-3] <= mov160.iloc[-3])
     near_50 = mov40.iloc[-1] >= 48 or mov40.iloc[-2] >= 48
     blue_cross_red_above_50 = bm_cross and near_50
@@ -231,6 +233,7 @@ def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, m
     return {
         "base": base, "mov40": mov40, "mov160": mov160,
         "yellow_cross_30": yellow_cross_30,
+        "blue_cross_50": blue_cross_50,
         "blue_cross_red_above_50": blue_cross_red_above_50
     }
 
@@ -248,10 +251,12 @@ def calculate_rsi_signals(series_close: pd.Series):
     cond_red_near_50 = (mov160.iloc[-1] < 50) and (mov160.iloc[-1] >= 40)
     cond_blue_below_red = mov40.iloc[-1] < mov160.iloc[-1]
 
+    # Dip
     yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
     yellow_bottom = (base.iloc[-1] <= 40) or (base.iloc[-2] <= 40)
     dip_signal = (yellow_cross_30 or (yellow_cross_green and yellow_bottom)) and cond_red_near_50 and cond_blue_below_red
 
+    # Orta
     yellow_mid = (40 <= base.iloc[-1] <= 45) or (40 <= base.iloc[-2] <= 45)
     orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
 
@@ -267,6 +272,7 @@ def run_all_9_screeners():
     while True:
         print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Tüm 9 Strateji Taranıyor...")
         
+        # 9 Ayrı Sinyal Listesi
         s1_uzun_ralli = []
         s2_base_30 = []
         s3_matrix_wm = []
@@ -281,7 +287,6 @@ def run_all_9_screeners():
             batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
             
             try:
-                # req yerine yf (yfinance) kullanıldı
                 data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
                 data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
                 
@@ -296,65 +301,76 @@ def run_all_9_screeners():
                         df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
                     except: df_w = pd.DataFrame()
 
-                    # --- 1. UZUN VADE RALLİ (Günlük) ---
+                    # --- 1. UZUN VADELİ RALLİ (Günlük - Interval: D) ---
                     if not df_d.empty and len(df_d) >= 180:
                         res = calculate_rsi_most_matrix(df_d['Close'])
                         if res["blue_cross_red_above_50"]:
-                            s1_uzun_ralli.append(f"• <b>{ticker}</b> ({df_d['Close'].iloc[-1]:.2f}₺)")
+                            price = df_d['Close'].iloc[-1]
+                            s1_uzun_ralli.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺)")
 
-                    # --- 2. RSI-MOST BASE 30 KESİŞİMİ ---
+                    # --- 2. RSI-MOST BASE 30 KESİŞİMİ (Günlük - Interval: D) ---
                     if not df_d.empty and len(df_d) >= 30:
                         b_res = calculate_rsi_most_matrix(df_d['Close'])
                         if b_res["yellow_cross_30"]:
-                            s2_base_30.append(f"• <b>{ticker}</b> (Günlük)")
+                            price = df_d['Close'].iloc[-1]
+                            s2_base_30.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺)")
 
-                    # --- 3. MATRIX ORTA HAT (50) KESİŞİMİ ---
+                    # --- 3. MATRIX HAFTALIK / AYLIK ORTA HAT KESİŞİMİ (Interval: W) ---
                     if not df_d.empty and len(df_d) >= 100:
                         df_w_res = df_d.resample('W').agg({'Close': 'last'}).dropna()
                         if len(df_w_res) >= 50:
                             m_res = calculate_rsi_most_matrix(df_w_res['Close'])
                             if (m_res["mov40"].iloc[-1] > 50 and m_res["mov40"].iloc[-2] <= 50):
-                                s3_matrix_wm.append(f"• <b>{ticker}</b> (Haftalık)")
+                                price = df_w_res['Close'].iloc[-1]
+                                s3_matrix_wm.append(f"• {make_tv_link(ticker, 'W')} ({price:.2f}₺)")
 
-                    # --- 4. ÜÇLÜ KESİŞİM ---
+                    # --- 4. ÜÇLÜ KESİŞİM (LEDA + Mavilim + WMA79) ---
                     if not df_d.empty and check_triple_confluence_signal(df_d):
-                        s4_uclu_kesisim.append(f"• <b>{ticker}</b> (Günlük)")
+                        price = df_d['Close'].iloc[-1]
+                        s4_uclu_kesisim.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺ - Günlük)")
                     if not df_w.empty and check_triple_confluence_signal(df_w):
-                        s4_uclu_kesisim.append(f"• <b>{ticker}</b> (Haftalık)")
+                        price = df_w['Close'].iloc[-1]
+                        s4_uclu_kesisim.append(f"• {make_tv_link(ticker, 'W')} ({price:.2f}₺ - Haftalık)")
 
-                    # --- 5. LEDA GÜNLÜK + MACD ---
+                    # --- 5. LEDA GÜNLÜK + MACD (Interval: D) ---
                     if not df_d.empty and len(df_d) >= 35:
                         res_d = calculate_leda_indicators(df_d)
                         if res_d is not None and res_d["buy"].iloc[-1] and check_macd_cross(df_d):
-                            s5_leda_d.append(f"• <b>{ticker}</b>")
+                            price = df_d['Close'].iloc[-1]
+                            s5_leda_d.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺)")
 
-                    # --- 6. LEDA HAFTALIK + MACD ---
+                    # --- 6. LEDA HAFTALIK + MACD (Interval: W) ---
                     if not df_w.empty and len(df_w) >= 35:
                         res_w = calculate_leda_indicators(df_w)
                         if res_w is not None and res_w["buy"].iloc[-1] and check_macd_cross(df_w):
-                            s6_leda_w.append(f"• <b>{ticker}</b>")
+                            price = df_w['Close'].iloc[-1]
+                            s6_leda_w.append(f"• {make_tv_link(ticker, 'W')} ({price:.2f}₺)")
 
-                    # --- 7. HU GÜNLÜK + MACD ---
+                    # --- 7. HU GÜNLÜK + MACD (Interval: D) ---
                     if not df_d.empty and check_hu_cross_signal(df_d) and check_macd_cross(df_d):
-                        s7_hu_d.append(f"• <b>{ticker}</b>")
+                        price = df_d['Close'].iloc[-1]
+                        s7_hu_d.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺)")
 
-                    # --- 8. MAVİLİM HAFTALIK + MACD ---
+                    # --- 8. MAVİLİM HAFTALIK + MACD (Interval: W) ---
                     if not df_w.empty and check_mavilim_signal(df_w) and check_macd_cross(df_w):
-                        s8_mav_w.append(f"• <b>{ticker}</b>")
+                        price = df_w['Close'].iloc[-1]
+                        s8_mav_w.append(f"• {make_tv_link(ticker, 'W')} ({price:.2f}₺)")
 
-                    # --- 9. HASSAS DİP VE ORTA BANT ---
+                    # --- 9. HASSAS DİP VE ORTA BANT (Interval: D) ---
                     if not df_d.empty and len(df_d) >= 180:
                         dip, orta = calculate_rsi_signals(df_d['Close'])
+                        price = df_d['Close'].iloc[-1]
                         if dip:
-                            s9_hassas_dip_orta.append(f"• <b>{ticker} (DİP)</b>")
+                            s9_hassas_dip_orta.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺ - DİP)")
                         if orta:
-                            s9_hassas_dip_orta.append(f"• <b>{ticker} (ORTA)</b>")
+                            s9_hassas_dip_orta.append(f"• {make_tv_link(ticker, 'D')} ({price:.2f}₺ - ORTA)")
 
             except Exception as e:
                 print(f"Batch Hatası: {e}")
             
             time.sleep(DELAY_BETWEEN_BATCHES)
 
+        # 📩 RAPORLAMA FONKSİYONU
         def report(title, items):
             if items:
                 telegram_gonder(f"<b>{title}</b>\n--------------------------------------\n" + "\n".join(items))
@@ -371,8 +387,8 @@ def run_all_9_screeners():
         report("🌊 8. MAVİLİM HAFTALIK + MACD", s8_mav_w)
         report("🎯 9. HASSAS DİP VE ORTA BANT TARAMASI", s9_hassas_dip_orta)
 
-        print(f"✅ Döngü bitti. {DELAY_BEFORE_NEXT_CYCLE} sn bekleniyor...")
-        break # GitHub Actions kullanıyorsanız sonsuz döngüden çıkmak için break bırakılabilir, sürekli çalışması için kaldırabilirsiniz.
+        print(f"✅ Tüm taramalar tamamlandı. {DELAY_BEFORE_NEXT_CYCLE} sn bekleniyor...")
+        time.sleep(DELAY_BEFORE_NEXT_CYCLE)
 
 if __name__ == "__main__":
     run_all_9_screeners()
