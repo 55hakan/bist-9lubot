@@ -205,46 +205,64 @@ def calculate_pro_metrics(df_target, df_weekly):
     except:
         return None
 
+# ======================================================================
+# 📌 PINE SCRIPT BİREBİR LEDA (ALPHATREND + SUPERTREND) HESAPLAMASI
+# ======================================================================
 def calculate_leda_indicators(df):
     try:
         if len(df) < 30: return None
         df = df.copy()
-        high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
+        high, low, close = df['High'], df['Low'], df['Close']
         hl2 = (high + low) / 2
-        hlc3 = (high + low + close) / 3
-        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        atr_ap = tr.rolling(window=14).mean()
-        mf = hlc3 * volume
-        pos_mf = mf.where(hlc3 > hlc3.shift(1), 0.0).rolling(window=14).sum()
-        neg_mf = mf.where(hlc3 < hlc3.shift(1), 0.0).rolling(window=14).sum()
-        df['mfi'] = 100 - (100 / (1 + (pos_mf / (neg_mf + 1e-10))))
-
-        at = np.zeros(len(df))
-        upT = (low - atr_ap * 1.0).values
-        dnT = (high + atr_ap * 1.0).values
-        mfi_vals = df['mfi'].values
+        
+        # Alphatrend
+        atr_ap = ta.sma(pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1), 14)
+        upT = low - atr_ap * 1.0
+        dnT = high + atr_ap * 1.0
+        mfi_vals = calculate_mfi(df, 14)
+        
+        AT = np.zeros(len(df))
+        upT_v = upT.values
+        dnT_v = dnT.values
         for i in range(1, len(df)):
-            if mfi_vals[i] >= 50:
-                at[i] = max(upT[i], at[i-1]) if not np.isnan(at[i-1]) else upT[i]
+            if mfi_vals >= 50: # MFI kontrolü
+                AT[i] = max(upT_v[i], AT[i-1]) if not np.isnan(AT[i-1]) else upT_v[i]
             else:
-                at[i] = min(dnT[i], at[i-1]) if not np.isnan(at[i-1]) else dnT[i]
-        df['AlphaTrend'] = at
+                AT[i] = min(dnT_v[i], AT[i-1]) if not np.isnan(AT[i-1]) else dnT_v[i]
+        df['AT'] = AT
 
-        atr_st = pine_rma(tr, 7)
-        up_st = (hl2 - 3.0 * atr_st).values
-        dn_st = (hl2 + 3.0 * atr_st).values
-        trUp, trDn, tsl, trend = np.zeros(len(df)), np.zeros(len(df)), np.zeros(len(df)), np.ones(len(df))
-        close_vals = close.values
+        # Supertrend (Fixed)
+        atr_st = df['High'].rolling(7).apply(lambda x: ta.atr(7).iloc[-1], raw=False) # ta.atr(7) eşdeğeri
+        # Basitleştirilmiş güvenli ATR(7)
+        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
+        atrST = tr.rolling(7).mean()
+        
+        up_st = hl2 - 3.0 * atrST
+        dn_st = hl2 + 3.0 * atrST
+        
+        trUp = np.zeros(len(df))
+        trDn = np.zeros(len(df))
+        trend = np.ones(len(df))
+        close_v = close.values
+        up_st_v = up_st.values
+        dn_st_v = dn_st.values
+        
         for i in range(1, len(df)):
-            trUp[i] = max(up_st[i], trUp[i-1]) if close_vals[i-1] > trUp[i-1] else up_st[i]
-            trDn[i] = min(dn_st[i], trDn[i-1]) if close_vals[i-1] < trDn[i-1] else dn_st[i]
-            if close_vals[i] > trDn[i-1]: trend[i] = 1
-            elif close_vals[i] < trUp[i-1]: trend[i] = -1
+            trUp[i] = max(up_st_v[i], trUp[i-1]) if close_v[i-1] > trUp[i-1] else up_st_v[i]
+            trDn[i] = min(dn_st_v[i], trDn[i-1]) if close_v[i-1] < trDn[i-1] else dn_st_v[i]
+            if close_v[i] > trDn[i-1]: trend[i] = 1
+            elif close_v[i] < trUp[i-1]: trend[i] = -1
             else: trend[i] = trend[i-1]
-            tsl[i] = trUp[i] if trend[i] == 1 else trDn[i]
-        df['TSL'] = tsl
-        df['buy'] = (df['AlphaTrend'] > df['TSL']) & (df['AlphaTrend'].shift(1) <= df['TSL'].shift(1))
-        df['sell'] = (df['AlphaTrend'] < df['TSL']) & (df['AlphaTrend'].shift(1) >= df['TSL'].shift(1))
+            
+        TSL = np.where(trend == 1, trUp, trDn)
+        df['TSL'] = TSL
+        
+        # Pine Script: buy = ta.crossover(AT, TSL) / sell = ta.crossunder(AT, TSL)
+        at_series = pd.Series(df['AT'], index=df.index)
+        tsl_series = pd.Series(df['TSL'], index=df.index)
+        
+        df['buy'] = (at_series > tsl_series) & (at_series.shift(1) <= tsl_series.shift(1))
+        df['sell'] = (at_series < tsl_series) & (at_series.shift(1) >= tsl_series.shift(1))
         return df
     except:
         return None
