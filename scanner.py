@@ -112,8 +112,12 @@ def telegram_gonder(message: str):
             print(f"Telegram Gönderim Hatası: {e}")
 
 # ======================================================================
-# 📊 MATEMATİKSEL İNDİKATÖR VE PINE SCRIPT UYUMLU MOTOR
+# 📊 MATEMATİKSEL İNDİKATÖR VE PRO HESAPLAMA MOTORU
 # ======================================================================
+def pine_rma(src, length):
+    alpha = 1 / length
+    return src.ewm(alpha=alpha, min_periods=length, adjust=False).mean()
+
 def wma(series: pd.Series, period: int) -> pd.Series:
     weights = np.arange(1, period + 1)
     return series.rolling(period).apply(lambda x: np.dot(x, weights) / weights.sum(), raw=True)
@@ -132,7 +136,9 @@ def check_macd_cross(df: pd.DataFrame) -> bool:
     exp2 = df['Close'].ewm(span=26, adjust=False).mean()
     macd = exp1 - exp2
     signal = macd.ewm(span=9, adjust=False).mean()
-    return bool((macd.iloc[-1] > signal.iloc[-1]) and (macd.iloc[-2] <= signal.iloc[-2]))
+    cross_current = (macd.iloc[-1] > signal.iloc[-1]) and (macd.iloc[-2] <= signal.iloc[-2])
+    cross_previous = (macd.iloc[-2] > signal.iloc[-2]) and (macd.iloc[-3] <= signal.iloc[-3])
+    return bool(cross_current or cross_previous)
 
 def calculate_adx(df, period=14):
     try:
@@ -193,72 +199,83 @@ def calculate_pro_metrics(df_target, df_weekly):
         mfi_val = calculate_mfi(df_target, 14)
         money_flow = "PARA GİRİŞİ ✅" if mfi_val > 50 else "PARA ÇIKIŞI ❌"
         
+        score = 85
+        score_durum = "GÜÇLÜ BOĞA 🚀"
         return {
             "price": current_price, "rsi_d": rsi_daily, "rsi_w": rsi_weekly,
             "adx": adx_val, "adx_status": adx_status, "mfi": mfi_val,
-            "money_flow": money_flow, "stop_loss": stop_loss, "target": target_price, "rr": rr_ratio
+            "money_flow": money_flow, "stop_loss": stop_loss, "target": target_price, "rr": rr_ratio,
+            "score": score, "score_durum": score_durum
         }
     except:
         return None
 
 # ======================================================================
-# 📌 LEDA (ALPHATREND + SUPERTREND) BİREBİR PINE SCRIPT HESAPLAMASI
+# 📌 PINE SCRIPT BİREBİR İNDİKATÖR MOTORLARI
 # ======================================================================
 def calculate_leda_indicators(df):
     try:
         if len(df) < 30: return None
         df = df.copy()
-        high, low, close = df['High'], df['Low'], df['Close']
+        high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
         hl2 = (high + low) / 2
+        hlc3 = (high + low + close) / 3
+        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
         
-        # Alphatrend
-        tr_ap = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        ATR = tr_ap.rolling(14).mean()
-        upT = low - ATR * 1.0
-        dnT = high + ATR * 1.0
+        atr_ap = tr.rolling(window=14).mean()
+        mf = hlc3 * volume
+        upper_mf = mf.where(hlc3 > hlc3.shift(1), 0.0)
+        lower_mf = mf.where(hlc3 < hlc3.shift(1), 0.0)
+        pos_mf = upper_mf.rolling(window=14).sum()
+        neg_mf = lower_mf.rolling(window=14).sum()
+        df['mfi'] = 100 - (100 / (1 + (pos_mf / (neg_mf + 1e-10))))
         
-        mfi_vals = calculate_mfi(df, 14)
-        AT = np.zeros(len(df))
-        upT_v = upT.values
-        dnT_v = dnT.values
+        at = np.zeros(len(df))
+        upT = (low - atr_ap * 1.0).values
+        dnT = (high + atr_ap * 1.0).values
+        mfi_vals = df['mfi'].values
+        
         for i in range(1, len(df)):
-            if mfi_vals >= 50:
-                AT[i] = max(upT_v[i], AT[i-1]) if not np.isnan(AT[i-1]) else upT_v[i]
+            if mfi_vals[i] >= 50:
+                at[i] = max(upT[i], at[i-1]) if not np.isnan(at[i-1]) else upT[i]
             else:
-                AT[i] = min(dnT_v[i], AT[i-1]) if not np.isnan(AT[i-1]) else dnT_v[i]
-        df['AT'] = AT
+                at[i] = min(dnT[i], at[i-1]) if not np.isnan(at[i-1]) else dnT[i]
+        df['AlphaTrend'] = at
 
-        # Supertrend (Fixed)
-        atrST = tr_ap.rolling(7).mean() # ta.atr(7) eşdeğeri
-        up = hl2 - 3.0 * atrST
-        dn = hl2 + 3.0 * atrST
-        
+        atr_st = pine_rma(tr, 7)
+        up_st = (hl2 - 3.0 * atr_st).values
+        dn_st = (hl2 + 3.0 * atr_st).values
         trUp = np.zeros(len(df))
         trDn = np.zeros(len(df))
+        tsl = np.zeros(len(df))
         trend = np.ones(len(df))
-        close_v = close.values
-        up_v = up.values
-        dn_v = dn.values
+        close_vals = close.values
         
         for i in range(1, len(df)):
-            trUp[i] = max(up_v[i], trUp[i-1]) if close_v[i-1] > trUp[i-1] else up_v[i]
-            trDn[i] = min(dn_v[i], trDn[i-1]) if close_v[i-1] < trDn[i-1] else dn_v[i]
-            if close_v[i] > trDn[i-1]: trend[i] = 1
-            elif close_v[i] < trUp[i-1]: trend[i] = -1
+            trUp[i] = max(up_st[i], trUp[i-1]) if close_vals[i-1] > trUp[i-1] else up_st[i]
+            trDn[i] = min(dn_st[i], trDn[i-1]) if close_vals[i-1] < trDn[i-1] else dn_st[i]
+            if close_vals[i] > trDn[i-1]: trend[i] = 1
+            elif close_vals[i] < trUp[i-1]: trend[i] = -1
             else: trend[i] = trend[i-1]
+            tsl[i] = trUp[i] if trend[i] == 1 else trDn[i]
             
-        TSL = np.where(trend == 1, trUp, trDn)
-        df['TSL'] = TSL
-        
-        # Kesişimler (Crossover / Crossunder)
-        at_s = pd.Series(df['AT'], index=df.index)
-        tsl_s = pd.Series(df['TSL'], index=df.index)
-        
-        df['buy'] = (at_s > tsl_s) & (at_s.shift(1) <= tsl_s.shift(1))
-        df['sell'] = (at_s < tsl_s) & (at_s.shift(1) >= tsl_s.shift(1))
+        df['TSL'] = tsl
+        df['buy'] = (df['AlphaTrend'] > df['TSL']) & (df['AlphaTrend'].shift(1) <= df['TSL'].shift(1))
+        df['sell'] = (df['AlphaTrend'] < df['TSL']) & (df['AlphaTrend'].shift(1) >= df['TSL'].shift(1))
         return df
     except:
         return None
+
+def check_hu_cross_signal(df: pd.DataFrame) -> bool:
+    len1, len2, smoothLen = 200, 400, 20
+    if len(df) < len2 + smoothLen + 2: return False
+    df = df.copy()
+    hu_base1 = wma(df['Close'], len1)
+    hu_base2 = wma(df['Close'], len2)
+    hu_raw = (2 * hu_base1) - hu_base2
+    df['HU_Line'] = wma(hu_raw, smoothLen)
+    df['cross_up'] = (df['Close'] > df['HU_Line']) & (df['Close'].shift(1) <= df['HU_Line'].shift(1))
+    return bool(df['cross_up'].iloc[-1])
 
 def check_mavilim_signal(df: pd.DataFrame) -> bool:
     if len(df) < 55: return False
@@ -266,30 +283,36 @@ def check_mavilim_signal(df: pd.DataFrame) -> bool:
     k1 = df['Close']
     k2 = wma(k1, 3); k3 = wma(k2, 5); k4 = wma(k3, 8)
     k5 = wma(k4, 13); k6 = wma(k5, 21)
-    k7 = wma(k6, 34)
-    return bool((k7.iloc[-1] > k7.iloc[-2]) and (df['Close'].iloc[-1] > k7.iloc[-1]) and (df['Close'].iloc[-2] <= k7.iloc[-2]))
+    df['K7'] = wma(k6, 34)
+    df['cross_up'] = (df['Close'] > df['K7']) & (df['Close'].shift(1) <= df['K7'].shift(1))
+    return bool(df['cross_up'].iloc[-1])
 
-def check_hu_cross_signal(df: pd.DataFrame) -> bool:
-    if len(df) < 420: return False
+def check_triple_confluence_signal(df: pd.DataFrame) -> bool:
+    if len(df) < 85: return False
     df = df.copy()
-    hu_base1 = wma(df['Close'], 200)
-    hu_base2 = wma(df['Close'], 400)
-    hu_raw = (2 * hu_base1) - hu_base2
-    hu_A = wma(hu_raw, 20)
-    # nz(hu_A, yedek formül) güvenli mekanizma
-    hu_A_fixed = hu_A.fillna(wma(2 * wma(df['Close'], 200) - wma(df['Close'], 400), 20))
-    return bool((df['Close'].iloc[-1] > hu_A_fixed.iloc[-1]) and (df['Close'].iloc[-2] <= hu_A_fixed.iloc[-2]))
+    df = calculate_leda_indicators(df)
+    if df is None: return False
+    k1 = df['Close']
+    k2 = wma(k1, 3); k3 = wma(k2, 5); k4 = wma(k3, 8)
+    k5 = wma(k4, 13); k6 = wma(k5, 21)
+    df['Mavilim'] = wma(k6, 34)
+    df['WMA79'] = wma(df['Close'], 79)
+    leda_buy = df["buy"].iloc[-1]
+    mavilim_cross = (df['Close'].iloc[-1] > df['Mavilim'].iloc[-1]) and (df['Close'].iloc[-2] <= df['Mavilim'].iloc[-2])
+    wma79_cross = (df['Close'].iloc[-1] > df['WMA79'].iloc[-1]) and (df['Close'].iloc[-2] <= df['WMA79'].iloc[-2])
+    return bool(leda_buy and mavilim_cross and wma79_cross)
 
 def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, most_ema=2, mov_short=5, mov_mid=40, mov_long=160):
     rsi_val = calculate_rsi(series_close, rsi_len)
     sma_rsi = rsi_val.rolling(window=most_sma).mean()
     base = sma_rsi.ewm(span=most_ema, adjust=False).mean()
+    mov5 = base.ewm(span=mov_short, adjust=False).mean()
     mov40 = base.ewm(span=mov_mid, adjust=False).mean()
     mov160 = base.ewm(span=mov_long, adjust=False).mean()
     
-    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30)
-    bm_cross = (mov40.iloc[-1] > mov160.iloc[-1] and mov40.iloc[-2] <= mov160.iloc[-2])
-    near_50 = mov40.iloc[-1] >= 48
+    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
+    bm_cross = (mov40.iloc[-1] > mov160.iloc[-1] and mov40.iloc[-2] <= mov160.iloc[-2]) or (mov40.iloc[-2] > mov160.iloc[-2] and mov40.iloc[-3] <= mov160.iloc[-3])
+    near_50 = mov40.iloc[-1] >= 48 or mov40.iloc[-2] >= 48
     blue_cross_red_above_50 = bm_cross and near_50
     
     return {
@@ -306,15 +329,16 @@ def calculate_rsi_signals(series_close: pd.Series):
     mov40 = base.ewm(span=40, adjust=False).mean()
     mov160 = base.ewm(span=160, adjust=False).mean()
     
-    yellow_cross_green = (base.iloc[-1] > mov5.iloc[-1] and base.iloc[-2] <= mov5.iloc[-2])
+    yellow_cross_green = (base.iloc[-1] > mov5.iloc[-1] and base.iloc[-2] <= mov5.iloc[-2]) or \
+                         (base.iloc[-2] > mov5.iloc[-2] and base.iloc[-3] <= mov5.iloc[-3])
     cond_red_near_50 = (mov160.iloc[-1] < 50) and (mov160.iloc[-1] >= 40)
     cond_blue_below_red = mov40.iloc[-1] < mov160.iloc[-1]
     
-    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30)
-    yellow_bottom = (base.iloc[-1] <= 40)
+    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
+    yellow_bottom = (base.iloc[-1] <= 40) or (base.iloc[-2] <= 40)
     dip_signal = (yellow_cross_30 or (yellow_cross_green and yellow_bottom)) and cond_red_near_50 and cond_blue_below_red
     
-    yellow_mid = (40 <= base.iloc[-1] <= 45)
+    yellow_mid = (40 <= base.iloc[-1] <= 45) or (40 <= base.iloc[-2] <= 45)
     orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
     return dip_signal, orta_signal
 
@@ -322,18 +346,20 @@ def calculate_rsi_signals(series_close: pd.Series):
 # 🚀 PRO BÜLTEN KART FORMATLAYICI
 # ======================================================================
 def send_pro_report(strategy_title, ticker, tv_link, pro, badge=""):
-    badge_text = f"\n🔥 <b>{badge}</b>\n" if badge else ""
+    badge_line = f"<b>{badge}</b>\n\n" if badge else ""
     msg = (
         f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n"
-        f"📌 <b>Strateji:</b> {strategy_title}{badge_text}\n"
+        f"📌 <b>Strateji:</b> {strategy_title}\n"
+        f"{badge_line}"
         f"🎯 <b>Hisse:</b> <a href='{tv_link}'><b>{ticker}</b></a>\n"
-        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n\n"
-        f"📊 <b>Osilatörler</b>\n"
+        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n"
+        f"⭐ <b>Skor:</b> <b>{pro['score']} / 100 ({pro['score_durum']})</b>\n\n"
+        f"📊 <b>Osilatörler </b>\n"
         f"💹 Günlük RSI: <b>{pro['rsi_d']:.2f}</b>\n"
         f"💹 Haftalık RSI: <b>{pro['rsi_w']:.2f}</b>\n"
-        f"💪 ADX: <b>{pro['adx']:.2f} ({pro['adx_status']})</b>\n"
+        f"💪 ADX <b>{pro['adx']:.2f} ({pro['adx_status']})</b>\n"
         f"💥 <b>{pro['money_flow']}</b> (MFI: {pro['mfi']:.1f})\n\n"
-        f"⚔️ <b>RİSK & HEDEF PLANI</b>\n"
+        f"⚔️ <b>RİSK & HEDEF PLANI </b>\n"
         f"🛑 <b>Stop-Loss:</b> <code>{pro['stop_loss']:.2f} ₺</code>\n"
         f"🎯 <b>Hedef (TP1):</b> <code>{pro['target']:.2f} ₺</code>\n\n"
         f"<i>ℹ️ Otomatik Akıllı Sinyal Sistemi</i>"
@@ -341,7 +367,7 @@ def send_pro_report(strategy_title, ticker, tv_link, pro, badge=""):
     telegram_gonder(msg)
 
 # ======================================================================
-# 🚀 11 STRATEJİ + SAATLİK SAT - ANA TARAMA MOTORU
+# 🚀 ANA TARAMA MOTORU
 # ======================================================================
 def run_targeted_screener():
     init_db()
@@ -349,223 +375,225 @@ def run_targeted_screener():
     telegram_gonder(
         f"🎯 <b>Emekli Sinyal Tarama Başlatıldı.</b>\n"
         f"📊 Mod: <b>{SELECTED_STRATEGY}</b>\n"
-        f"🤖 Bot için <b>11 Özel Strateji</b> aktif.\n"
-        f"🔍 Kendi kullandığınız indikatörler ile kontrol ediniz.\n"
-        f"🤖 Bot aktif ve tarama gerçekleştiriliyor...\n"
+        f"🤖 Bot Aktif ve Taramalar Gerçekleştiriliyor...\n"
         f"⚠️ <i>Sinyaller bilgi amaçlıdır, Yatırım Tavsiyesi Değildir.</i>"
     )
 
-    results_log = []
     s1_uzun_ralli = []
     s2_base_30 = []
     s3_matrix_wm = []
     s4_uclu_kesisim = []
-    s5_leda_d_macd = []
-    s6_leda_d_sade = []
-    s7_leda_w_macd = []
-    s8_leda_w_sade = []
-    s9_mav_w_macd = []
-    s10_mav_w_sade = []
-    s11_hassas_dip_orta = []
+    
+    s5_leda_d_sade = []
+    s6_leda_d_macd = []
+    s7_leda_w_sade = []
+    s8_leda_w_macd = []
+    
+    s9_hu_d_sade = []
+    s10_hu_d_macd = []
+    
+    s11_mav_w_sade = []
+    s12_mav_w_macd = []
+    
+    s13_hassas_dip = []
+    s14_hassas_orta = []
     s_hourly_sell = []
 
-    try:
-        for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
-            batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
-            try:
-                data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
-                data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
-                data_1h = yf.download(batch, interval="1h", period="60d", progress=False, group_by='ticker', auto_adjust=True, threads=False)
-
-                for full_ticker in batch:
-                    ticker = full_ticker.replace('.IS', '')
-                    
-                    try: 
-                        df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
-                        if isinstance(df_d.columns, pd.MultiIndex): df_d = df_d.droplevel(1, axis=1)
-                    except: df_d = pd.DataFrame()
-
-                    try: 
-                        df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
-                        if isinstance(df_w.columns, pd.MultiIndex): df_w = df_w.droplevel(1, axis=1)
-                    except: df_w = pd.DataFrame()
-
-                    try: 
-                        df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
-                        if isinstance(df_h.columns, pd.MultiIndex): df_h = df_h.droplevel(1, axis=1)
-                    except: df_h = pd.DataFrame()
-
-                    # --- SAATLİK LEDA SAT KONTROLÜ (Sadece Kesin Son Mum) ---
-                    try:
-                        if not df_h.empty and len(df_h) >= 30:
-                            res_h = calculate_leda_indicators(df_h)
-                            if res_h is not None and "sell" in res_h.columns and bool(res_h["sell"].iloc[-1]):
-                                st_name = "⚠️ SAATLİK SAT SİNYALİ"
-                                if not signal_already_sent(ticker, st_name):
-                                    tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
-                                    pro_h = calculate_pro_metrics(df_h, df_w)
-                                    if pro_h:
-                                        s_hourly_sell.append((ticker, tv_link_h, pro_h, st_name))
-                                        results_log.append({"Hisse": ticker, "Strateji": st_name, "Zaman Dilimi": "1 Saat", "Link": tv_link_h})
-                                        mark_signal_sent(ticker, st_name)
-                    except: pass
-
-                    daily_signals_list = []
-                    weekly_signals_list = []
-
-                    # 1. Uzun Vade Ralli
-                    ralli_d = False
-                    if not df_d.empty and len(df_d) >= 180:
-                        if calculate_rsi_most_matrix(df_d['Close'])["blue_cross_red_above_50"]:
-                            ralli_d = True
-                            daily_signals_list.append("Ralli")
-
-                    # 2. Base 30
-                    base_30_d = False
-                    if not df_d.empty and len(df_d) >= 30:
-                        if calculate_rsi_most_matrix(df_d['Close'])["yellow_cross_30"]:
-                            base_30_d = True
-                            daily_signals_list.append("RSI-MOST 30")
-
-                    # 3. Matrix Orta Hat 50
-                    matrix_wm = False
-                    if not df_d.empty and len(df_d) >= 100:
-                        df_w_res = df_d.resample('W').agg({'Close': 'last'}).dropna()
-                        if len(df_w_res) >= 50:
-                            m_res = calculate_rsi_most_matrix(df_w_res['Close'])
-                            if m_res["mov40"].iloc[-1] > 50 and m_res["mov40"].iloc[-2] <= 50:
-                                matrix_wm = True
-                                weekly_signals_list.append("RSI-MİST 50")
-
-                    # 4. Üçlü Kesişim
-                    uclu_d = not df_d.empty and check_hu_cross_signal(df_d)
-                    uclu_w = not df_w.empty and check_hu_cross_signal(df_w)
-                    if uclu_d: daily_signals_list.append("Üçlü Kesişim")
-                    if uclu_w: weekly_signals_list.append("Üçlü Kesişim")
-
-                    # 5 & 6. Leda Günlük
-                    leda_d_buy = False
-                    leda_d_macd_ok = False
-                    if not df_d.empty and len(df_d) >= 35:
-                        res_leda_d = calculate_leda_indicators(df_d)
-                        if res_leda_d is not None and res_leda_d["buy"].iloc[-1]:
-                            leda_d_buy = True
-                            daily_signals_list.append("Leda Günlük")
-                            if check_macd_cross(df_d): leda_d_macd_ok = True
-
-                    # 7 & 8. Leda Haftalık
-                    leda_w_buy = False
-                    leda_w_macd_ok = False
-                    if not df_w.empty and len(df_w) >= 35:
-                        res_leda_w = calculate_leda_indicators(df_w)
-                        if res_leda_w is not None and res_leda_w["buy"].iloc[-1]:
-                            leda_w_buy = True
-                            weekly_signals_list.append("Leda Haftalık")
-                            if check_macd_cross(df_w): leda_w_macd_ok = True
-
-                    # 9 & 10. Mavilim Haftalık
-                    mav_w_cross = False
-                    mav_w_macd_ok = False
-                    if not df_w.empty and check_mavilim_signal(df_w):
-                        mav_w_cross = True
-                        weekly_signals_list.append("Mavilim")
-                        if check_macd_cross(df_w): mav_w_macd_ok = True
-
-                    # 11. Hassas Dip ve Orta Bant
-                    dip_d, orta_d = False, False
-                    if not df_d.empty and len(df_d) >= 180:
-                        dip_d, orta_d = calculate_rsi_signals(df_d['Close'])
-                        if dip_d or orta_d: daily_signals_list.append("Hassas Dip")
-
-                    # --- ÇİFT ONAY KONTROLÜ ---
-                    is_double = (len(daily_signals_list) > 0) and (len(weekly_signals_list) > 0)
-                    confluence_badge = f"⭐ ÇİFT ONAY: [{' + '.join(daily_signals_list)}] & [{' + '.join(weekly_signals_list)}]" if is_double else ""
-
-                    def process_signal(st_key, st_name, condition, interval, is_weekly=False):
-                        if condition and (SELECTED_STRATEGY in ["Hepsi", st_key]):
-                            if not signal_already_sent(ticker, st_name):
-                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval={interval}"
-                                target_df = df_w if is_weekly else df_d
-                                pro_m = calculate_pro_metrics(target_df, df_w)
-                                if pro_m:
-                                    items_list = {
-                                        "s1": s1_uzun_ralli, "s2": s2_base_30, "s3": s3_matrix_wm,
-                                        "s4": s4_uclu_kesisim, "s5": s5_leda_d_macd, "s6": s6_leda_d_sade,
-                                        "s7": s7_leda_w_macd, "s8": s8_leda_w_sade, "s9": s9_mav_w_macd,
-                                        "s10": s10_mav_w_sade, "s11": s11_hassas_dip_orta
-                                    }.get(st_key)
-                                    if items_list is not None:
-                                        items_list.append((ticker, tv_link, pro_m, confluence_badge))
-                                        results_log.append({"Hisse": ticker, "Strateji": st_name, "Detay": confluence_badge, "Link": tv_link})
-                                        mark_signal_sent(ticker, st_name)
-
-                    process_signal("s1", "💎 1. RALLİ", ralli_d, "D")
-                    process_signal("s2", "🟡 2. RSI-MOST 30", base_30_d, "D")
-                    process_signal("s3", "📅 3. RSI-MİST 50", matrix_wm, "W", is_weekly=True)
-                    process_signal("s4", "💥 4. ÜÇLÜ KESİŞİM", uclu_d or uclu_w, "D")
-                    process_signal("s5", "📈 5. ÖZEL GÜNLÜK", leda_d_buy and leda_d_macd_ok, "D")
-                    process_signal("s6", "📊 6. LEDA GÜNLÜK", leda_d_buy, "D")
-                    process_signal("s7", "📈 7. ÖZEL HAFTALIK", leda_w_buy and leda_w_macd_ok, "W", is_weekly=True)
-                    process_signal("s8", "📊 8. LEDA HAFTALIK", leda_w_buy, "W", is_weekly=True)
-                    process_signal("s9", "🌊 9. MAVİLİM + MACD", mav_w_cross and mav_w_macd_ok, "W", is_weekly=True)
-                    process_signal("s10", "🌊 10. MAVİLİM", mav_w_cross, "W", is_weekly=True)
-                    process_signal("s11", "🎯 11. HASSAS DİP", dip_d or orta_d, "D")
-
-            except Exception as e:
-                print(f"Batch Hatası: {e}")
-                traceback.print_exc()
-
-            time.sleep(DELAY_BETWEEN_BATCHES)
-
-        def report_strategy(title, items):
-            if items:
-                for item in items:
-                    ticker, tv_link, pro, badge = item
-                    send_pro_report(title, ticker, tv_link, pro, badge)
-            else:
-                msg = (
-                    f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n"
-                    f"📌 <b>Strateji:</b> {title}\n\n"
-                    f"❌ <i>Bu taramada koşulu sağlayan hisse yok.</i>\n\n"
-                    f"<i>ℹ️ Otomatik Akıllı Sinyal Sistemi</i>"
-                )
-                telegram_gonder(msg)
-
-        if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk", "Leda Haftalik"]:
-            report_strategy("⏰ SAATLİK SAT SİNYALİ", s_hourly_sell)
-
-        report_strategy("💎 1. RALLİ", s1_uzun_ralli)
-        report_strategy("🟡 2. RSI-MOST 30", s2_base_30)
-        report_strategy("📅 3. RSI-MİST 50", s3_matrix_wm)
-        report_strategy("💥 4. ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
-        report_strategy("📈 5. ÖZEL GÜNLÜK", s5_leda_d_macd)
-        report_strategy("📊 6. LEDA GÜNLÜK", s6_leda_d_sade)
-        report_strategy("📈 7. ÖZEL HAFTALIK", s7_leda_w_macd)
-        report_strategy("📊 8. LEDA HAFTALIK", s8_leda_w_sade)
-        report_strategy("🌊 9. MAVİLİM + MACD", s9_mav_w_macd)
-        report_strategy("🌊 10. MAVİLİM", s10_mav_w_sade)
-        report_strategy("🎯 11. HASSAS DİP", s11_hassas_dip_orta)
-
-    except Exception as e:
-        print(f"Genel Tarama Hatası: {e}")
-        traceback.print_exc()
-    finally:
+    for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
+        batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
         try:
-            telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
-        except Exception as ex:
-            print(f"Bitiş mesajı gönderilemedi: {ex}")
+            data_1d = yf.download(batch, interval="1d", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
+            data_1wk = yf.download(batch, interval="1wk", period="max", progress=False, group_by='ticker', auto_adjust=True, threads=False)
+            data_1h = yf.download(batch, interval="1h", period="60d", progress=False, group_by='ticker', auto_adjust=True, threads=False)
 
-    print("\n" + "="*50)
-    print("🏁 TARAMA TAMAMLANDI - SONUÇ ÖZETİ")
-    print("="*50)
-    if results_log:
-        df_results = pd.DataFrame(results_log)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', 1000)
-        print(df_results.to_string(index=False))
-    else:
-        print("❌ Bu taramada herhangi bir yeni strateji sinyali bulunamadı.")
-    print("="*50)
+            for full_ticker in batch:
+                ticker = full_ticker.replace('.IS', '')
+                
+                try: df_d = data_1d[full_ticker].dropna() if len(batch) > 1 else data_1d.dropna()
+                except: df_d = pd.DataFrame()
+
+                try: df_w = data_1wk[full_ticker].dropna() if len(batch) > 1 else data_1wk.dropna()
+                except: df_w = pd.DataFrame()
+
+                try: df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
+                except: df_h = pd.DataFrame()
+
+                # 1. Saatlik Leda Sat Sinyali
+                try:
+                    if not df_h.empty and len(df_h) >= 30:
+                        res_h = calculate_leda_indicators(df_h)
+                        if res_h is not None and "sell" in res_h.columns and bool(res_h["sell"].iloc[-1]):
+                            st_name = "⚠️ SAATLİK LEDA SAT SİNYALİ"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
+                                pro_h = calculate_pro_metrics(df_h, df_w)
+                                if pro_h:
+                                    s_hourly_sell.append((ticker, tv_link_h, pro_h, st_name))
+                                    mark_signal_sent(ticker, st_name)
+                except: pass
+
+                # 2. Uzun Vade Ralli
+                if not df_d.empty and len(df_d) >= 180:
+                    res_r = calculate_rsi_most_matrix(df_d['Close'])
+                    if res_r["blue_cross_red_above_50"]:
+                        st_name = "💎 1. UZUN VADE RALLİ"
+                        if not signal_already_sent(ticker, st_name):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                            pro_d = calculate_pro_metrics(df_d, df_w)
+                            if pro_d: s1_uzun_ralli.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_name)
+
+                # 3. Base 30
+                if not df_d.empty and len(df_d) >= 30:
+                    b_res = calculate_rsi_most_matrix(df_d['Close'])
+                    if b_res["yellow_cross_30"]:
+                        st_name = "🟡 2. RSI-MOST BASE 30"
+                        if not signal_already_sent(ticker, st_name):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                            pro_d = calculate_pro_metrics(df_d, df_w)
+                            if pro_d: s2_base_30.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_name)
+
+                # Matrix Orta Hat 50
+                if not df_d.empty and len(df_d) >= 100:
+                    df_w_res = df_d.resample('W').agg({'Close': 'last'}).dropna()
+                    if len(df_w_res) >= 50:
+                        m_res = calculate_rsi_most_matrix(df_w_res['Close'])
+                        if m_res["mov40"].iloc[-1] > 50 and m_res["mov40"].iloc[-2] <= 50:
+                            st_name = "📅 3. MATRIX ORTA HAT 50"
+                            if not signal_already_sent(ticker, st_name):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                                pro_w = calculate_pro_metrics(df_w_res, df_w)
+                                if pro_w: s3_matrix_wm.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_name)
+
+                # 4. Üçlü Kesişim
+                if not df_d.empty and check_triple_confluence_signal(df_d):
+                    st_name = "💥 4. ÜÇLÜ KESİŞİM (GÜNLÜK)"
+                    if not signal_already_sent(ticker, st_name):
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                        pro_d = calculate_pro_metrics(df_d, df_w)
+                        if pro_d: s4_uclu_kesisim.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_name)
+                elif not df_w.empty and check_triple_confluence_signal(df_w):
+                    st_name = "💥 4. ÜÇLÜ KESİŞİM (HAFTALIK)"
+                    if not signal_already_sent(ticker, st_name):
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                        pro_w = calculate_pro_metrics(df_w, df_w)
+                        if pro_w: s4_uclu_kesisim.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_name)
+
+                # LEDA KONTROLLERİ (Sade ve MACD Ayrı Ayrı)
+                if not df_d.empty and len(df_d) >= 35:
+                    res_leda_d = calculate_leda_indicators(df_d)
+                    if res_leda_d is not None and res_leda_d["buy"].iloc[-1]:
+                        # Sade Günlük Leda
+                        st_sade = "📊 LEDA GÜNLÜK (SADE)"
+                        if not signal_already_sent(ticker, st_sade):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                            pro_d = calculate_pro_metrics(df_d, df_w)
+                            if pro_d: s5_leda_d_sade.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_sade)
+                        
+                        # MACD Onaylı Günlük Leda
+                        if check_macd_cross(df_d):
+                            st_macd = "📈 LEDA GÜNLÜK + MACD"
+                            if not signal_already_sent(ticker, st_macd):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                                pro_d = calculate_pro_metrics(df_d, df_w)
+                                if pro_d: s6_leda_d_macd.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_macd)
+
+                if not df_w.empty and len(df_w) >= 35:
+                    res_leda_w = calculate_leda_indicators(df_w)
+                    if res_leda_w is not None and res_leda_w["buy"].iloc[-1]:
+                        # Sade Haftalık Leda
+                        st_sade_w = "📊 LEDA HAFTALIK (SADE)"
+                        if not signal_already_sent(ticker, st_sade_w):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                            pro_w = calculate_pro_metrics(df_w, df_w)
+                            if pro_w: s7_leda_w_sade.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_sade_w)
+                        
+                        # MACD Onaylı Haftalık Leda
+                        if check_macd_cross(df_w):
+                            st_macd_w = "📈 LEDA HAFTALIK + MACD"
+                            if not signal_already_sent(ticker, st_macd_w):
+                                tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                                pro_w = calculate_pro_metrics(df_w, df_w)
+                                if pro_w: s8_leda_w_macd.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_macd_w)
+
+                # HU KONTROLLERİ (Sade ve MACD Ayrı Ayrı - Günlük)
+                if not df_d.empty and check_hu_cross_signal(df_d):
+                    st_hu_sade = "💎 HU GÜNLÜK (SADE)"
+                    if not signal_already_sent(ticker, st_hu_sade):
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                        pro_d = calculate_pro_metrics(df_d, df_w)
+                        if pro_d: s9_hu_d_sade.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_hu_sade)
+                    
+                    if check_macd_cross(df_d):
+                        st_hu_macd = "💎 HU GÜNLÜK + MACD"
+                        if not signal_already_sent(ticker, st_hu_macd):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                            pro_d = calculate_pro_metrics(df_d, df_w)
+                            if pro_d: s10_hu_d_macd.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_hu_macd)
+
+                # MAVİLİM KONTROLLERİ (Sade ve MACD Ayrı Ayrı - Haftalık)
+                if not df_w.empty and check_mavilim_signal(df_w):
+                    st_mav_sade = "🌊 MAVİLİM HAFTALIK (SADE)"
+                    if not signal_already_sent(ticker, st_mav_sade):
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                        pro_w = calculate_pro_metrics(df_w, df_w)
+                        if pro_w: s11_mav_w_sade.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_mav_sade)
+                    
+                    if check_macd_cross(df_w):
+                        st_mav_macd = "🌊 MAVİLİM HAFTALIK + MACD"
+                        if not signal_already_sent(ticker, st_mav_macd):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
+                            pro_w = calculate_pro_metrics(df_w, df_w)
+                            if pro_w: s12_mav_w_macd.append((ticker, tv_link, pro_w, "")); mark_signal_sent(ticker, st_mav_macd)
+
+                # 11. Hassas Dip ve Orta Bant
+                if not df_d.empty and len(df_d) >= 180:
+                    dip, orta = calculate_rsi_signals(df_d['Close'])
+                    if dip:
+                        st_dip = "🎯 11. HASSAS DİP"
+                        if not signal_already_sent(ticker, st_dip):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                            pro_d = calculate_pro_metrics(df_d, df_w)
+                            if pro_d: s13_hassas_dip.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_dip)
+                    if orta:
+                        st_orta = "🎯 11. ORTA BANT"
+                        if not signal_already_sent(ticker, st_orta):
+                            tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
+                            pro_d = calculate_pro_metrics(df_d, df_w)
+                            if pro_d: s14_hassas_orta.append((ticker, tv_link, pro_d, "")); mark_signal_sent(ticker, st_orta)
+
+        except Exception as e:
+            print(f"Batch Hatası: {e}")
+            traceback.print_exc()
+
+        time.sleep(DELAY_BETWEEN_BATCHES)
+
+    def report_strategy(title, items):
+        if items:
+            for item in items:
+                ticker, tv_link, pro, badge = item
+                send_pro_report(title, ticker, tv_link, pro, badge)
+        else:
+            msg = f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n📌 <b>Strateji:</b> {title}\n\n❌ <i>Bu taramada koşulu sağlayan hisse yok.</i>"
+            telegram_gonder(msg)
+
+    # Raporlama Sıralaması
+    report_strategy("⚠️ SAATLİK LEDA SAT SİNYALİ", s_hourly_sell)
+    report_strategy("💎 1. UZUN VADE RALLİ", s1_uzun_ralli)
+    report_strategy("🟡 2. RSI-MOST BASE 30", s2_base_30)
+    report_strategy("📅 3. MATRIX ORTA HAT 50", s3_matrix_wm)
+    report_strategy("💥 4. ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
+    report_strategy("📊 LEDA GÜNLÜK (SADE)", s5_leda_d_sade)
+    report_strategy("📈 LEDA GÜNLÜK + MACD", s6_leda_d_macd)
+    report_strategy("📊 LEDA HAFTALIK (SADE)", s7_leda_w_sade)
+    report_strategy("📈 LEDA HAFTALIK + MACD", s8_leda_w_macd)
+    report_strategy("💎 HU GÜNLÜK (SADE)", s9_hu_d_sade)
+    report_strategy("💎 HU GÜNLÜK + MACD", s10_hu_d_macd)
+    report_strategy("🌊 MAVİLİM HAFTALIK (SADE)", s11_mav_w_sade)
+    report_strategy("🌊 MAVİLİM HAFTALIK + MACD", s12_mav_w_macd)
+    report_strategy("🎯 11. HASSAS DİP", s13_hassas_dip)
+    report_strategy("🎯 11. ORTA BANT", s14_hassas_orta)
+
+    telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
 
 if __name__ == "__main__":
     run_targeted_screener()
