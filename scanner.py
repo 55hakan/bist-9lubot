@@ -497,9 +497,6 @@ def run_targeted_screener():
                     is_double = (len(daily_signals_list) > 0) and (len(weekly_signals_list) > 0)
                     confluence_badge = f"⭐ ÇİFT ONAY: {' + '.join(daily_signals_list)} & {' + '.join(weekly_signals_list)}" if is_double else ""
 
-                    price_d = df_d['Close'].iloc[-1] if not df_d.empty else 0
-                    price_w = df_w['Close'].iloc[-1] if not df_w.empty else price_d
-
                     # Strateji Kontrolleri ve Kayıtları
                     def process_signal(st_key, st_name, condition, interval, is_weekly=False):
                         if condition and (SELECTED_STRATEGY in ["Hepsi", st_key]):
@@ -519,19 +516,19 @@ def run_targeted_screener():
                                         results_log.append({"Hisse": ticker, "Strateji": st_name, "Detay": confluence_badge, "Link": tv_link})
                                         mark_signal_sent(ticker, st_name)
 
-                    process_signal("s1", "1️⃣ UZUN VADELİ RALLİ", ralli_d, "D")
-                    process_signal("s2", "2️⃣ RSI-MOST BASE 30", base_30_d, "D")
-                    process_signal("s3", "3️⃣ MATRIX ORTA HAT (50)", matrix_wm, "W", is_weekly=True)
-                    process_signal("s4", "4️⃣ ÜÇLÜ KESİŞİM (Günlük)", uclu_d, "D")
-                    process_signal("s4", "4️⃣ ÜÇLÜ KESİŞİM (Haftalık)", uclu_w, "W", is_weekly=True)
-                    process_signal("s5", "5️⃣ LEDA GÜNLÜK + MACD", leda_d_buy and leda_d_macd_ok, "D")
-                    process_signal("s6", "6️⃣ LEDA GÜNLÜK SADE", leda_d_buy, "D")
-                    process_signal("s7", "7️⃣ LEDA HAFTALIK + MACD", leda_w_buy and leda_w_macd_ok, "W", is_weekly=True)
-                    process_signal("s8", "8️⃣ LEDA HAFTALIK SADE", leda_w_buy, "W", is_weekly=True)
-                    process_signal("s9", "9️⃣ MAVİLİM HAFTALIK + MACD", mav_w_cross and mav_w_macd_ok, "W", is_weekly=True)
-                    process_signal("s10", "10️⃣ MAVİLİM HAFTALIK SADE", mav_w_cross, "W", is_weekly=True)
-                    process_signal("s11", "11️⃣ HASSAS DİP BANT", dip_d, "D")
-                    process_signal("s11", "11️⃣ HASSAS ORTA BANT", orta_d, "D")
+                    process_signal("s1", "💎 1. UZUN VADELİ RALLİ", ralli_d, "D")
+                    process_signal("s2", "🟡 2. RSI-MOST BASE 30", base_30_d, "D")
+                    process_signal("s3", "📅 3. MATRIX ORTA HAT (50)", matrix_wm, "W", is_weekly=True)
+                    process_signal("s4", "💥 4. ÜÇLÜ KESİŞİM (Günlük)", uclu_d, "D")
+                    process_signal("s4", "💥 4. ÜÇLÜ KESİŞİM (Haftalık)", uclu_w, "W", is_weekly=True)
+                    process_signal("s5", "📈 5. LEDA GÜNLÜK + MACD", leda_d_buy and leda_d_macd_ok, "D")
+                    process_signal("s6", "📊 6. LEDA GÜNLÜK SADE", leda_d_buy, "D")
+                    process_signal("s7", "📈 7. LEDA HAFTALIK + MACD", leda_w_buy and leda_w_macd_ok, "W", is_weekly=True)
+                    process_signal("s8", "📊 8. LEDA HAFTALIK SADE", leda_w_buy, "W", is_weekly=True)
+                    process_signal("s9", "🌊 9. MAVİLİM HAFTALIK + MACD", mav_w_cross and mav_w_macd_ok, "W", is_weekly=True)
+                    process_signal("s10", "🌊 10. MAVİLİM HAFTALIK SADE", mav_w_cross, "W", is_weekly=True)
+                    process_signal("s11", "🎯 11. HASSAS DİP BANT", dip_d, "D")
+                    process_signal("s11", "🎯 11. HASSAS ORTA BANT", orta_d, "D")
 
             except Exception as e:
                 print(f"Batch Hatası: {e}")
@@ -539,24 +536,35 @@ def run_targeted_screener():
 
             time.sleep(DELAY_BETWEEN_BATCHES)
 
+        # --- RAPORLAMA FONKSİYONU (Hisse Yoksa Bilgi Mesajı Gönderir) ---
         def report_strategy(title, items):
             if items:
                 for item in items:
                     ticker, tv_link, pro, badge = item
                     send_pro_report(title, ticker, tv_link, pro, badge)
+            else:
+                msg = (
+                    f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n"
+                    f"📌 <b>Strateji:</b> {title}\n\n"
+                    f"❌ <i>Bu taramada koşulu sağlayan hisse yok.</i>\n\n"
+                    f"<i>ℹ️ Otomatik Akıllı Sinyal Sistemi</i>"
+                )
+                telegram_gonder(msg)
 
-        report_strategy("⏰ SAATLİK LEDA SAT SİNYALİ", s_hourly_sell)
-        report_strategy("💎 1. UZUN VADELİ RALLİ", s1_uzun_ralli)
-        report_strategy("🟡 2. RSI-MOST BASE 30", s2_base_30)
-        report_strategy("📅 3. MATRIX ORTA HAT (50)", s3_matrix_wm)
+        if SELECTED_STRATEGY in ["Hepsi", "Leda Gunluk", "Leda Haftalik"]:
+            report_strategy("⏰ SAATLİK SAT SİNYALİ", s_hourly_sell)
+
+        report_strategy("💎 1. RALLİ", s1_uzun_ralli)
+        report_strategy("🟡 2. RSI-MOST 30", s2_base_30)
+        report_strategy("📅 3. RSI-MİST 50", s3_matrix_wm)
         report_strategy("💥 4. ÜÇLÜ KESİŞİM", s4_uclu_kesisim)
-        report_strategy("📈 5. LEDA GÜNLÜK + MACD", s5_leda_d_macd)
-        report_strategy("📊 6. LEDA GÜNLÜK SADE", s6_leda_d_sade)
-        report_strategy("📈 7. LEDA HAFTALIK + MACD", s7_leda_w_macd)
-        report_strategy("📊 8. LEDA HAFTALIK SADE", s8_leda_w_sade)
-        report_strategy("🌊 9. MAVİLİM HAFTALIK + MACD", s9_mav_w_macd)
-        report_strategy("🌊 10. MAVİLİM HAFTALIK SADE", s10_mav_w_sade)
-        report_strategy("🎯 11. HASSAS DİP/ORTA BANT", s11_hassas_dip_orta)
+        report_strategy("📈 5. ÖZEL GÜNLÜK", s5_leda_d_macd)
+        report_strategy("📊 6. LEDA GÜNLÜK", s6_leda_d_sade)
+        report_strategy("📈 7. ÖZEL HAFTALIK", s7_leda_w_macd)
+        report_strategy("📊 8. LEDA HAFTALIK", s8_leda_w_sade)
+        report_strategy("🌊 9. MAVİLİM + MACD", s9_mav_w_macd)
+        report_strategy("🌊 10. MAVİLİM", s10_mav_w_sade)
+        report_strategy("🎯 11. HASSAS DİP", s11_hassas_dip_orta)
 
     except Exception as e:
         print(f"Genel Tarama Hatası: {e}")
