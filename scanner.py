@@ -1,10 +1,11 @@
-
+import os
 import pandas as pd
 import numpy as np
 import time
 import requests
 import yfinance as yf
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # ======================================================================
@@ -47,12 +48,12 @@ BIST_TICKERS = ["AEFES", "AGHOL", "AKBNK", "AKSA", "AKSEN", "ALARK", "ALFAS", "A
     "ULUUN", "UNLU", "USAK", "VAKKO", "VBTYZ", "VERTU", "VERUS", "VESBE", "YATAS", "YAYLA",
     "YKSLN", "YUNSA","CLEBI", "TUREX", "GRSEL", "PARSN", "NTGAZ", "BANVT", "MTRKS", "LINK", "OZKGY", 
     "NUHCM", "BOBET"]
+
 BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
 
 # ======================================================================
 # 📊 YARDIMCI HESAPLAMA FONKSİYONLARI (PINE SCRIPT BİREBİR MATEMATİĞİ)
 # ======================================================================
-
 def pine_wma(series, length):
     weights = np.arange(1, length + 1)
     return series.rolling(length).apply(lambda weights_slice: np.dot(weights_slice, weights) / weights.sum(), raw=True)
@@ -65,25 +66,21 @@ def calculate_indicators(df):
     try:
         if len(df) < 450: return None # HU-like için en az 400+ bar gereklidir
         df = df.copy()
-
         high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
         hl2 = (high + low) / 2
         hlc3 = (high + low + close) / 3
         tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-
+        
         # ------------------------------------------------------------------
         # 1. DARVAS BOX HESAPLAMASI
         # ------------------------------------------------------------------
         boxLen = 5
         hhv_ref = high.rolling(boxLen).max()
         
-        # NewH Hesabı (ta.valuewhen(high > HHV_ref[1], high, 0))
         cond_newh = high > hhv_ref.shift(1)
         newh = high.where(cond_newh).ffill()
         
-        # LLV Hesabı
         llv = low.rolling(boxLen).min()
-        
         box1 = high.rolling(3).max() < high.rolling(4).max()
         bars_since = cond_newh.groupby((cond_newh != cond_newh.shift()).cumsum()).cumcount()
         boxCond = (bars_since == 3) & box1
@@ -109,7 +106,7 @@ def calculate_indicators(df):
         k4 = pine_wma(k3, 8)
         k5 = pine_wma(k4, 13)
         k6 = pine_wma(k5, 21)
-        df['Mavilim'] = pine_wma(k6, 34) # K7
+        df['Mavilim'] = pine_wma(k6, 34)
 
         # ------------------------------------------------------------------
         # 4. MOVING AVERAGE 2 (WMA 79)
@@ -167,79 +164,18 @@ def calculate_indicators(df):
         # ------------------------------------------------------------------
         # 🎯 SİNYAL KONTROLLERİ
         # ------------------------------------------------------------------
-        # LEDA BUY: AlphaTrend'in TSL'yi yukarı kesmesi
         df["leda_buy"] = (df["AlphaTrend"] > df["TSL"]) & (df["AlphaTrend"].shift(1) <= df["TSL"].shift(1))
-
-        # Çizgilerin Tamamı
+        
         lines = ['Darvas_Top', 'HU', 'Mavilim', 'MA2']
-
-        # ŞART A: Fiyatın LEDA AL verdiği mumda TÜM çizgileri aynı anda yukarı kesmesi
         crossover_all = (close > df[lines].max(axis=1)) & (close.shift(1) <= df[lines].shift(1).min(axis=1))
-
-        # ŞART B: Fiyatın LEDA AL verdiği mumda TÜM çizgilerin üzerinde olması
         above_all = close > df[lines].max(axis=1)
-
-        # Birleştirilmiş Koşul: LEDA AL sinyali + (Kesişim VEYA Üstünde Olma)
+        
         df["final_signal"] = df["leda_buy"] & (crossover_all | above_all)
-
         df['price_change'] = ((close - close.shift(1)) / close.shift(1)) * 100
-        return df
 
+        return df
     except Exception as e:
         return None
-
-# ======================================================================
-# 🚀 TARAMA MOTORU
-# ======================================================================
-def run_screener():
-    print(f"🚀 LEDA + Çizgi Üstü / Kesişim Taraması Başlatıldı...")
-
-    for plan in SCAN_PLAN:
-        all_hits = []
-        print(f"🔎 {plan['timeframe']} taranıyor...")
-
-        for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
-            batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
-            try:
-                data = yf.download(batch, interval=plan['yf_interval'], period=plan['period'],
-                                   progress=False, group_by="ticker", auto_adjust=True, threads=True)
-            except Exception as e:
-                print(f"Hata: {e}")
-                continue
-
-            for ticker_full in batch:
-                try:
-                    if len(batch) > 1:
-                        if ticker_full not in data.columns.levels[0]: continue
-                        df = data[ticker_full].dropna()
-                    else:
-                        df = data.dropna()
-
-                    if df.empty or len(df) < 450: continue
-
-                    df = calculate_indicators(df)
-                    if df is None: continue
-
-                    # 🎯 SON (GÜNCEL) MUM KONTROLÜ
-                    if df["final_signal"].iloc[-1]:
-                        ticker_clean = ticker_full.replace(".IS", "")
-                        last_price = df["Close"].iloc[-1]
-                        change_pct = df["price_change"].iloc[-1]
-                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST:{ticker_clean}&interval={plan['tv_interval']}"
-
-                        all_hits.append(f"🔥 <a href='{tv_link}'><b>{ticker_clean}</b></a> ({last_price:.2f} TL | %{change_pct:.1f})")
-
-                except Exception:
-                    continue
-
-            time.sleep(DELAY_BETWEEN_BATCHES)
-
-        if all_hits:
-            header = f"<b>🟢 {plan['timeframe']} LEDA AL + ÇİZGİ TESPİT SİNYALİ</b>\n\n"
-            for j in range(0, len(all_hits), 20):
-                send_telegram(header + "\n".join(all_hits[j:j+20]))
-        else:
-            print(f"[{plan['timeframe']}] Şartları sağlayan hisse bulunamadı.")
 
 # ======================================================================
 # 📩 GÖNDERİM
@@ -250,6 +186,52 @@ def send_telegram(msg):
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                           data={"chat_id": cid, "text": msg, "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=15)
         except: pass
+
+# ======================================================================
+# 🚀 TARAMA MOTORU
+# ======================================================================
+def run_screener():
+    print(f"🚀 LEDA + Çizgi Üstü / Kesişim Taraması Başlatıldı...")
+    for plan in SCAN_PLAN:
+        all_hits = []
+        print(f"🔎 {plan['timeframe']} taranıyor...")
+        for i in range(0, len(BIST_STOCK_LIST), BATCH_SIZE):
+            batch = BIST_STOCK_LIST[i:i+BATCH_SIZE]
+            try:
+                data = yf.download(batch, interval=plan['yf_interval'], period=plan['period'],
+                                     progress=False, group_by="ticker", auto_adjust=True, threads=True)
+            except Exception as e:
+                print(f"Hata: {e}")
+                continue
+            
+            for ticker_full in batch:
+                try:
+                    if len(batch) > 1:
+                        if ticker_full not in data.columns.levels[0]: continue
+                        df = data[ticker_full].dropna()
+                    else:
+                        df = data.dropna()
+                    
+                    if df.empty or len(df) < 450: continue
+                    df = calculate_indicators(df)
+                    if df is None: continue
+                    
+                    if df["final_signal"].iloc[-1]:
+                        ticker_clean = ticker_full.replace(".IS", "")
+                        last_price = df["Close"].iloc[-1]
+                        change_pct = df["price_change"].iloc[-1]
+                        tv_link = f"https://www.tradingview.com/chart/?symbol=BIST:{ticker_clean}&interval={plan['tv_interval']}"
+                        all_hits.append(f"🔥 <a href='{tv_link}'><b>{ticker_clean}</b></a> ({last_price:.2f} TL | %{change_pct:.1f})")
+                except Exception:
+                    continue
+            time.sleep(DELAY_BETWEEN_BATCHES)
+            
+        if all_hits:
+            header = f"<b>🟢 {plan['timeframe']} LEDA AL + ÇİZGİ TESPİT SİNYALİ</b>\n\n"
+            for j in range(0, len(all_hits), 20):
+                send_telegram(header + "\n".join(all_hits[j:j+20]))
+        else:
+            print(f"[{plan['timeframe']}] Şartları sağlayan hisse bulunamadı.")
 
 if __name__ == "__main__":
     run_screener()
