@@ -136,18 +136,14 @@ def check_macd_cross(df: pd.DataFrame) -> bool:
     exp2 = df['Close'].ewm(span=26, adjust=False).mean()
     macd = exp1 - exp2
     signal = macd.ewm(span=9, adjust=False).mean()
-    cross_current = (macd.iloc[-1] > signal.iloc[-1]) and (macd.iloc[-2] <= signal.iloc[-2])
-    cross_previous = (macd.iloc[-2] > signal.iloc[-2]) and (macd.iloc[-3] <= signal.iloc[-3])
-    return bool(cross_current or cross_previous)
+    return bool((macd.iloc[-1] > signal.iloc[-1]) and (macd.iloc[-2] <= signal.iloc[-2]))
 
 def calculate_adx(df, period=14):
     try:
         if df is None or len(df) < (period * 2):
             return 20.0, "ZAYIF / YATAY ⚖️"
         df = df.copy()
-        high = df['High']
-        low = df['Low']
-        close = df['Close']
+        high, low, close = df['High'], df['Low'], df['Close']
         tr1 = high - low
         tr2 = abs(high - close.shift(1))
         tr3 = abs(low - close.shift(1))
@@ -159,18 +155,11 @@ def calculate_adx(df, period=14):
         minus_dm = np.where((minus_dm > plus_dm) & (minus_dm > 0), minus_dm, 0.0)
         plus_di = 100 * pd.Series(plus_dm, index=df.index).ewm(alpha=1/period, adjust=False).mean() / (atr + 1e-10)
         minus_di = 100 * pd.Series(minus_dm, index=df.index).ewm(alpha=1/period, adjust=False).mean() / (atr + 1e-10)
-        sum_di = plus_di + minus_di
-        sum_di = sum_di.replace(0, 1e-10)
+        sum_di = (plus_di + minus_di).replace(0, 1e-10)
         dx = 100 * abs(plus_di - minus_di) / sum_di
-        adx_series = dx.ewm(alpha=1/period, adjust=False).mean()
-        adx = adx_series.iloc[-1]
-        if np.isnan(adx):
-            adx = 20.0
-            status = "ZAYIF / YATAY ⚖️"
-        elif adx > 25:
-            status = "GÜÇLÜ TREND 🚀"
-        else:
-            status = "ZAYIF / YATAY ⚖️"
+        adx = dx.ewm(alpha=1/period, adjust=False).mean().iloc[-1]
+        if np.isnan(adx): adx = 20.0
+        status = "GÜÇLÜ TREND 🚀" if adx > 25 else "ZAYIF / YATAY ⚖️"
         return float(adx), status
     except:
         return 20.0, "ZAYIF / YATAY ⚖️"
@@ -190,12 +179,9 @@ def calculate_mfi(df, period=14):
 def calculate_pro_metrics(df_target, df_weekly):
     try:
         if df_target is None or len(df_target) < 50: return None
-        close = df_target['Close']
-        high = df_target['High']
-        low = df_target['Low']
-        atr_period = 14
+        close, high, low = df_target['Close'], df_target['High'], df_target['Low']
         tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        atr_value = tr.rolling(window=atr_period).mean().iloc[-1]
+        atr_value = tr.rolling(window=14).mean().iloc[-1]
         current_price = close.iloc[-1]
         
         stop_loss = current_price - (atr_value * 1.5)
@@ -212,16 +198,9 @@ def calculate_pro_metrics(df_target, df_weekly):
         money_flow = "PARA GİRİŞİ ✅" if mfi_val > 50 else "PARA ÇIKIŞI ❌"
         
         return {
-            "price": current_price,
-            "rsi_d": rsi_daily,
-            "rsi_w": rsi_weekly,
-            "adx": adx_val,
-            "adx_status": adx_status,
-            "mfi": mfi_val,
-            "money_flow": money_flow,
-            "stop_loss": stop_loss,
-            "target": target_price,
-            "rr": rr_ratio
+            "price": current_price, "rsi_d": rsi_daily, "rsi_w": rsi_weekly,
+            "adx": adx_val, "adx_status": adx_status, "mfi": mfi_val,
+            "money_flow": money_flow, "stop_loss": stop_loss, "target": target_price, "rr": rr_ratio
         }
     except:
         return None
@@ -236,10 +215,8 @@ def calculate_leda_indicators(df):
         tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
         atr_ap = tr.rolling(window=14).mean()
         mf = hlc3 * volume
-        upper_mf = mf.where(hlc3 > hlc3.shift(1), 0.0)
-        lower_mf = mf.where(hlc3 < hlc3.shift(1), 0.0)
-        pos_mf = upper_mf.rolling(window=14).sum()
-        neg_mf = lower_mf.rolling(window=14).sum()
+        pos_mf = mf.where(hlc3 > hlc3.shift(1), 0.0).rolling(window=14).sum()
+        neg_mf = mf.where(hlc3 < hlc3.shift(1), 0.0).rolling(window=14).sum()
         df['mfi'] = 100 - (100 / (1 + (pos_mf / (neg_mf + 1e-10))))
 
         at = np.zeros(len(df))
@@ -256,10 +233,7 @@ def calculate_leda_indicators(df):
         atr_st = pine_rma(tr, 7)
         up_st = (hl2 - 3.0 * atr_st).values
         dn_st = (hl2 + 3.0 * atr_st).values
-        trUp = np.zeros(len(df))
-        trDn = np.zeros(len(df))
-        tsl = np.zeros(len(df))
-        trend = np.ones(len(df))
+        trUp, trDn, tsl, trend = np.zeros(len(df)), np.zeros(len(df)), np.zeros(len(df)), np.ones(len(df))
         close_vals = close.values
         for i in range(1, len(df)):
             trUp[i] = max(up_st[i], trUp[i-1]) if close_vals[i-1] > trUp[i-1] else up_st[i]
@@ -282,35 +256,27 @@ def check_mavilim_signal(df: pd.DataFrame) -> bool:
     k2 = wma(k1, 3); k3 = wma(k2, 5); k4 = wma(k3, 8)
     k5 = wma(k4, 13); k6 = wma(k5, 21)
     df['K7'] = wma(k6, 34)
-    df['cross_up'] = (df['Close'] > df['K7']) & (df['Close'].shift(1) <= df['K7'].shift(1))
-    return bool(df['cross_up'].iloc[-1])
+    return bool((df['Close'].iloc[-1] > df['K7'].iloc[-1]) and (df['Close'].iloc[-2] <= df['K7'].iloc[-2]))
 
-def check_triple_confluence_signal(df: pd.DataFrame) -> bool:
-    if len(df) < 85: return False
+def check_hu_cross_signal(df: pd.DataFrame) -> bool:
+    if len(df) < 420: return False
     df = df.copy()
-    df = calculate_leda_indicators(df)
-    if df is None: return False
-    k1 = df['Close']
-    k2 = wma(k1, 3); k3 = wma(k2, 5); k4 = wma(k3, 8)
-    k5 = wma(k4, 13); k6 = wma(k5, 21)
-    df['Mavilim'] = wma(k6, 34)
-    df['WMA79'] = wma(df['Close'], 79)
-    leda_buy = df["buy"].iloc[-1]
-    mavilim_cross = (df['Close'].iloc[-1] > df['Mavilim'].iloc[-1]) and (df['Close'].iloc[-2] <= df['Mavilim'].iloc[-2])
-    wma79_cross = (df['Close'].iloc[-1] > df['WMA79'].iloc[-1]) and (df['Close'].iloc[-2] <= df['WMA79'].iloc[-2])
-    return bool(leda_buy and mavilim_cross and wma79_cross)
+    hu_base1 = wma(df['Close'], 200)
+    hu_base2 = wma(df['Close'], 400)
+    hu_raw = (2 * hu_base1) - hu_base2
+    df['HU_Line'] = wma(hu_raw, 20)
+    return bool((df['Close'].iloc[-1] > df['HU_Line'].iloc[-1]) and (df['Close'].iloc[-2] <= df['HU_Line'].iloc[-2]))
 
 def calculate_rsi_most_matrix(series_close: pd.Series, rsi_len=14, most_sma=3, most_ema=2, mov_short=5, mov_mid=40, mov_long=160):
     rsi_val = calculate_rsi(series_close, rsi_len)
     sma_rsi = rsi_val.rolling(window=most_sma).mean()
     base = sma_rsi.ewm(span=most_ema, adjust=False).mean()
-    mov5 = base.ewm(span=mov_short, adjust=False).mean()
     mov40 = base.ewm(span=mov_mid, adjust=False).mean()
     mov160 = base.ewm(span=mov_long, adjust=False).mean()
     
-    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
-    bm_cross = (mov40.iloc[-1] > mov160.iloc[-1] and mov40.iloc[-2] <= mov160.iloc[-2]) or (mov40.iloc[-2] > mov160.iloc[-2] and mov40.iloc[-3] <= mov160.iloc[-3])
-    near_50 = mov40.iloc[-1] >= 48 or mov40.iloc[-2] >= 48
+    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30)
+    bm_cross = (mov40.iloc[-1] > mov160.iloc[-1] and mov40.iloc[-2] <= mov160.iloc[-2])
+    near_50 = mov40.iloc[-1] >= 48
     blue_cross_red_above_50 = bm_cross and near_50
     
     return {
@@ -327,16 +293,15 @@ def calculate_rsi_signals(series_close: pd.Series):
     mov40 = base.ewm(span=40, adjust=False).mean()
     mov160 = base.ewm(span=160, adjust=False).mean()
     
-    yellow_cross_green = (base.iloc[-1] > mov5.iloc[-1] and base.iloc[-2] <= mov5.iloc[-2]) or \
-                         (base.iloc[-2] > mov5.iloc[-2] and base.iloc[-3] <= mov5.iloc[-3])
+    yellow_cross_green = (base.iloc[-1] > mov5.iloc[-1] and base.iloc[-2] <= mov5.iloc[-2])
     cond_red_near_50 = (mov160.iloc[-1] < 50) and (mov160.iloc[-1] >= 40)
     cond_blue_below_red = mov40.iloc[-1] < mov160.iloc[-1]
     
-    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30) or (base.iloc[-2] > 30 and base.iloc[-3] <= 30)
-    yellow_bottom = (base.iloc[-1] <= 40) or (base.iloc[-2] <= 40)
+    yellow_cross_30 = (base.iloc[-1] > 30 and base.iloc[-2] <= 30)
+    yellow_bottom = (base.iloc[-1] <= 40)
     dip_signal = (yellow_cross_30 or (yellow_cross_green and yellow_bottom)) and cond_red_near_50 and cond_blue_below_red
     
-    yellow_mid = (40 <= base.iloc[-1] <= 45) or (40 <= base.iloc[-2] <= 45)
+    yellow_mid = (40 <= base.iloc[-1] <= 45)
     orta_signal = yellow_cross_green and yellow_mid and cond_red_near_50 and cond_blue_below_red
     return dip_signal, orta_signal
 
@@ -411,11 +376,11 @@ def run_targeted_screener():
                     try: df_h = data_1h[full_ticker].dropna() if len(batch) > 1 else data_1h.dropna()
                     except: df_h = pd.DataFrame()
 
-                    # --- SAATLİK LEDA SAT KONTROLÜ ---
+                    # --- SAATLİK LEDA SAT KONTROLÜ (Sadece Son Mum) ---
                     try:
                         if not df_h.empty and len(df_h) >= 30:
                             res_h = calculate_leda_indicators(df_h)
-                            if res_h is not None and "sell" in res_h.columns and res_h["sell"].iloc[-1]:
+                            if res_h is not None and "sell" in res_h.columns and bool(res_h["sell"].iloc[-1]):
                                 st_name = "⚠️ SAATLİK LEDA SAT SİNYALİ"
                                 if not signal_already_sent(ticker, st_name):
                                     tv_link_h = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=60"
@@ -434,16 +399,16 @@ def run_targeted_screener():
                     if not df_d.empty and len(df_d) >= 180:
                         if calculate_rsi_most_matrix(df_d['Close'])["blue_cross_red_above_50"]:
                             ralli_d = True
-                            daily_signals_list.append("Uzun Vade Ralli")
+                            daily_signals_list.append("Ralli")
 
                     # 2. Base 30
                     base_30_d = False
                     if not df_d.empty and len(df_d) >= 30:
                         if calculate_rsi_most_matrix(df_d['Close'])["yellow_cross_30"]:
                             base_30_d = True
-                            daily_signals_list.append("Base 30")
+                            daily_signals_list.append("RSI-MOST 30")
 
-                    # 3. Matrix Orta Hat 50 (Haftalık Resample)
+                    # 3. Matrix Orta Hat 50
                     matrix_wm = False
                     if not df_d.empty and len(df_d) >= 100:
                         df_w_res = df_d.resample('W').agg({'Close': 'last'}).dropna()
@@ -451,15 +416,15 @@ def run_targeted_screener():
                             m_res = calculate_rsi_most_matrix(df_w_res['Close'])
                             if m_res["mov40"].iloc[-1] > 50 and m_res["mov40"].iloc[-2] <= 50:
                                 matrix_wm = True
-                                weekly_signals_list.append("Matrix Orta Hat 50")
+                                weekly_signals_list.append("RSI-MİST 50")
 
-                    # 4. Üçlü Kesişim
-                    uclu_d = not df_d.empty and check_triple_confluence_signal(df_d)
-                    uclu_w = not df_w.empty and check_triple_confluence_signal(df_w)
-                    if uclu_d: daily_signals_list.append("Üçlü Kesişim G")
-                    if uclu_w: weekly_signals_list.append("Üçlü Kesişim H")
+                    # 4. Üçlü Kesişim (Leda + Mavilim + WMA79)
+                    uclu_d = not df_d.empty and check_hu_cross_signal(df_d)
+                    uclu_w = not df_w.empty and check_hu_cross_signal(df_w)
+                    if uclu_d: daily_signals_list.append("Üçlü Kesişim")
+                    if uclu_w: weekly_signals_list.append("Üçlü Kesişim")
 
-                    # 5 & 6. Leda Günlük (+ MACD / Sade)
+                    # 5 & 6. Leda Günlük
                     leda_d_buy = False
                     leda_d_macd_ok = False
                     if not df_d.empty and len(df_d) >= 35:
@@ -469,7 +434,7 @@ def run_targeted_screener():
                             daily_signals_list.append("Leda Günlük")
                             if check_macd_cross(df_d): leda_d_macd_ok = True
 
-                    # 7 & 8. Leda Haftalık (+ MACD / Sade)
+                    # 7 & 8. Leda Haftalık
                     leda_w_buy = False
                     leda_w_macd_ok = False
                     if not df_w.empty and len(df_w) >= 35:
@@ -479,25 +444,24 @@ def run_targeted_screener():
                             weekly_signals_list.append("Leda Haftalık")
                             if check_macd_cross(df_w): leda_w_macd_ok = True
 
-                    # 9 & 10. Mavilim Haftalık (+ MACD / Sade)
+                    # 9 & 10. Mavilim Haftalık
                     mav_w_cross = False
                     mav_w_macd_ok = False
                     if not df_w.empty and check_mavilim_signal(df_w):
                         mav_w_cross = True
-                        weekly_signals_list.append("Mavilim Haftalık")
+                        weekly_signals_list.append("Mavilim")
                         if check_macd_cross(df_w): mav_w_macd_ok = True
 
                     # 11. Hassas Dip ve Orta Bant
                     dip_d, orta_d = False, False
                     if not df_d.empty and len(df_d) >= 180:
                         dip_d, orta_d = calculate_rsi_signals(df_d['Close'])
-                        if dip_d or orta_d: daily_signals_list.append("Hassas Dip/Orta")
+                        if dip_d or orta_d: daily_signals_list.append("Hassas Dip")
 
-                    # Çift Onay Rozeti
+                    # --- ÇİFT ONAY KONTROLÜ (Günlük + Haftalık Çakışması) ---
                     is_double = (len(daily_signals_list) > 0) and (len(weekly_signals_list) > 0)
-                    confluence_badge = f"⭐ ÇİFT ONAY: {' + '.join(daily_signals_list)} & {' + '.join(weekly_signals_list)}" if is_double else ""
+                    confluence_badge = f"⭐ ÇİFT ONAY: [{' + '.join(daily_signals_list)}] & [{' + '.join(weekly_signals_list)}]" if is_double else ""
 
-                    # Strateji Kontrolleri ve Kayıtları
                     def process_signal(st_key, st_name, condition, interval, is_weekly=False):
                         if condition and (SELECTED_STRATEGY in ["Hepsi", st_key]):
                             if not signal_already_sent(ticker, st_name):
@@ -516,19 +480,17 @@ def run_targeted_screener():
                                         results_log.append({"Hisse": ticker, "Strateji": st_name, "Detay": confluence_badge, "Link": tv_link})
                                         mark_signal_sent(ticker, st_name)
 
-                    process_signal("s1", "💎 1. UZUN VADELİ RALLİ", ralli_d, "D")
-                    process_signal("s2", "🟡 2. RSI-MOST BASE 30", base_30_d, "D")
-                    process_signal("s3", "📅 3. MATRIX ORTA HAT (50)", matrix_wm, "W", is_weekly=True)
-                    process_signal("s4", "💥 4. ÜÇLÜ KESİŞİM (Günlük)", uclu_d, "D")
-                    process_signal("s4", "💥 4. ÜÇLÜ KESİŞİM (Haftalık)", uclu_w, "W", is_weekly=True)
-                    process_signal("s5", "📈 5. LEDA GÜNLÜK + MACD", leda_d_buy and leda_d_macd_ok, "D")
-                    process_signal("s6", "📊 6. LEDA GÜNLÜK SADE", leda_d_buy, "D")
-                    process_signal("s7", "📈 7. LEDA HAFTALIK + MACD", leda_w_buy and leda_w_macd_ok, "W", is_weekly=True)
-                    process_signal("s8", "📊 8. LEDA HAFTALIK SADE", leda_w_buy, "W", is_weekly=True)
-                    process_signal("s9", "🌊 9. MAVİLİM HAFTALIK + MACD", mav_w_cross and mav_w_macd_ok, "W", is_weekly=True)
-                    process_signal("s10", "🌊 10. MAVİLİM HAFTALIK SADE", mav_w_cross, "W", is_weekly=True)
-                    process_signal("s11", "🎯 11. HASSAS DİP BANT", dip_d, "D")
-                    process_signal("s11", "🎯 11. HASSAS ORTA BANT", orta_d, "D")
+                    process_signal("s1", "💎 1. RALLİ", ralli_d, "D")
+                    process_signal("s2", "🟡 2. RSI-MOST 30", base_30_d, "D")
+                    process_signal("s3", "📅 3. RSI-MİST 50", matrix_wm, "W", is_weekly=True)
+                    process_signal("s4", "💥 4. ÜÇLÜ KESİŞİM", uclu_d or uclu_w, "D")
+                    process_signal("s5", "📈 5. ÖZEL GÜNLÜK", leda_d_buy and leda_d_macd_ok, "D")
+                    process_signal("s6", "📊 6. LEDA GÜNLÜK", leda_d_buy, "D")
+                    process_signal("s7", "📈 7. ÖZEL HAFTALIK", leda_w_buy and leda_w_macd_ok, "W", is_weekly=True)
+                    process_signal("s8", "📊 8. LEDA HAFTALIK", leda_w_buy, "W", is_weekly=True)
+                    process_signal("s9", "🌊 9. MAVİLİM + MACD", mav_w_cross and mav_w_macd_ok, "W", is_weekly=True)
+                    process_signal("s10", "🌊 10. MAVİLİM", mav_w_cross, "W", is_weekly=True)
+                    process_signal("s11", "🎯 11. HASSAS DİP", dip_d or orta_d, "D")
 
             except Exception as e:
                 print(f"Batch Hatası: {e}")
@@ -536,7 +498,6 @@ def run_targeted_screener():
 
             time.sleep(DELAY_BETWEEN_BATCHES)
 
-        # --- RAPORLAMA FONKSİYONU (Hisse Yoksa Bilgi Mesajı Gönderir) ---
         def report_strategy(title, items):
             if items:
                 for item in items:
@@ -571,7 +532,7 @@ def run_targeted_screener():
         traceback.print_exc()
     finally:
         try:
-            telegram_gonder("🏁 <b>11 Strateji Pro Tarama Tamamlandı.</b>")
+            telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
         except: pass
 
     print("\n" + "="*50)
