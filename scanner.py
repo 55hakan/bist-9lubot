@@ -92,24 +92,41 @@ def mark_signal_sent(ticker: str, strategy: str):
 # ======================================================================
 # 📩 TELEGRAM GÖNDERİM FONKSİYONU
 # ======================================================================
+import time
+
 def telegram_gonder(message: str):
     if not BOT_TOKEN or not TELEGRAM_CHAT_IDS or not TELEGRAM_CHAT_IDS[0]:
         print("⚠️ Telegram Token veya Chat ID eksik! Mesaj gönderilemedi.")
         return
     for cid in TELEGRAM_CHAT_IDS:
         if not cid: continue
-        try:
-            data = {
-                "chat_id": cid,
-                "text": message,
-                "parse_mode": "HTML",
-                "disable_web_page_preview": True
-            }
-            resp = req.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=data, timeout=15)
-            if resp.status_code != 200:
-                print(f"Telegram API Hatası ({resp.status_code}): {resp.text}")
-        except Exception as e:
-            print(f"Telegram Gönderim Hatası: {e}")
+        retries = 3
+        for attempt in range(retries):
+            try:
+                data = {
+                    "chat_id": cid,
+                    "text": message,
+                    "parse_mode": "HTML",
+                    "disable_web_page_preview": True
+                }
+                resp = req.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=data, timeout=15)
+                
+                if resp.status_code == 200:
+                    time.sleep(1.2) # Telegram Flood koruması için mesajlar arası 1.2 saniye nefes alma payı
+                    break
+                elif resp.status_code == 429:
+                    try:
+                        retry_after = resp.json().get("parameters", {}).get("retry_after", 5)
+                    except:
+                        retry_after = 5
+                    print(f"⚠️ Telegram 429 Flood Sınırı! {retry_after} saniye bekleniyor...")
+                    time.sleep(retry_after + 1)
+                else:
+                    print(f"Telegram API Hatası ({resp.status_code}): {resp.text}")
+                    break
+            except Exception as e:
+                print(f"Telegram Gönderim Hatası: {e}")
+                time.sleep(2)
 
 # ======================================================================
 # 📊 MATEMATİKSEL İNDİKATÖR VE PRO HESAPLAMA MOTORU
