@@ -24,80 +24,7 @@ DELAY_BETWEEN_BATCHES = 2
 DB_PATH = "bot_signals.db"
 
 BIST_TICKERS = [
-    "AEFES","AGHOL","AKBNK","AKSA","AKSEN","ALARK","ALFAS","ALTNY",
-    "ANSGR","ARCLK","ASELS","ASTOR","AVPGY","BALSU","BERA","BIMAS",
-    "BINHO","BRSAN","BRYAT","BSOKE","BTCIM","CANTE","CCOLA","CIMSA",
-    "CLEBI","CWENE","DOAS","DOHOL","DSTKF","EFOR","EGEEN","EKGYO",
-    "ENERY","ENJSA","ENKAI","EREGL","EUPWR","FENER","FROTO","GARAN",
-    "GENIL","GESAN","GLRMK","GRSEL","GRTHO","GSRAY","GUBRF","HALKB",
-    "HEKTS","IEYHO","TRENJ","ISCTR","ISMEN","KCAER","KCHOL","KONTR",
-    "TRMET","TRALT","KRDMD","KTLEV","KUYAS","LMKDC","MAGEN","MAVI",
-    "MGROS","MIATK","MPARK","OBAMS","ODAS","OTKAR","OYAKC","PASEU",
-    "PETKM","PGSUS","RALYH","REEDR","SAHOL","SASA","SISE","SKBNK",
-    "SMRTG","SOKM","TABGD","TAVHL","TCELL","THYAO","TKFEN","TOASO",
-    "TSKB","TTKOM","TTRAK","TUPRS","TUREX","TURSG","ULKER","VAKBN",
-    "VESTL","YEOTK","YKBNK","ZOREN","A1CAP","A1YEN","ACSEL","ADEL",
-    "ADESE","ADGYO","AFYON","AGESA","AGROT","AGYO","AHGAZ","AHSGY",
-    "AKCNS","AKENR","AKFGY","AKFIS","AKFYE","AKGRT","AKMGY","AKSGY",
-    "AKSUE","AKYHO","ALBRK","ALCAR","ALCTL","ALGYO","ALKA","ALKIM",
-    "ALKLC","ALVES","ANELE","ANGEN","ANHYT","ARASE","ARDYZ","ARENA",
-    "ARMGD","ARSAN","ARTMS","ARZUM","ASGYO","ASUZU","ATAGY","ATAKP",
-    "ATATP","ATEKS","ATLAS","ATSYH","AVGYO","AVHOL","AVOD","AVTUR",
-    "AYCES","AYDEM","AYEN","AYES","AYGAZ","AZTEK","BAGFS","BAHKM",
-    "BAKAB","BALAT","BANVT","BARMA","BASCM","BASGZ","BAYRK","BEGYO",
-    "BESLR","BEYAZ","BFREN","BIENY","BIGCH","BIGEN","BINBN","BIOEN",
-    "BIZIM","BJKAS","BLCYT","BMSCH","BMSTL","BNTAS","BOBET","BORLS",
-    "BORSK","BOSSA","BRISA","BRKO","BRKSN","BRKVY","BRLSM","BRMEN",
-    "BUCIM","BULGS","BURCE","BURVA","BVSAN","BYDNR","CASA","CATES",
-    "CELHA","CEMAS","CEMTS","CEMZY","CEOEM","CGCAM","CMBTN","CMENT",
-    "CONSE","COSMO","CRDFA","CRFSA","CUSAN","CVKMD","TRHOL","DAGI",
-    "DAPGM","DARDL","DCTTR","DENGE","DERHL","DERIM","DESA","DESPC",
-    "DEVA","DGATE","DGGYO","DGNMO","DIRIT","DITAS","DMRGD","DMSAS",
-    "DNISI","BIGTK","DOCO","DOFER","DOGUB","DOKTA","DURDO","DURKN",
-    "DYOBY","DZGYO","EBEBK","ECILC","ECZYT","EDATA","EDIP","EGEGY",
-    "EGEPO","EGGUB","EGPRO","EGSER","EKIZ","EKOS","EKSUN","ELITE",
-    "EMKEL","EMNIS","ENDAE","ENSRI","ENTRA","EPLAS","ERBOS","ERCB",
-    "ERSU","ESCAR","ESCOM","ESEN","ETILR","ETYAT","EUHOL","EUKYO",
-    "EUREN","EUYO","EYGYO","FADE","FLAP","FMIZP","FONET","FORMT",
-    "FORTE","FRIGO","FZLGY","GARFA","GEDIK","GEDZA","GENTS","GEREL",
-    "GIPTA","GLBMD","GLCVY","GLRYH","GLYHO","GMTAS","GOKNR","GOLTS",
-    "GOODY","GOZDE","GRNYO","GSDDE","GSDHO","GUNDG","GWIND","GZNMI",
-    "HATEK","HATSN","HDFGS","HEDEF","HKTM","HLGYO","HOROZ","HRKET",
-    "HTTBT","HUBVC","HUNER","HURGZ","ICBCT","ICUGS","IDGYO","IHAAS",
-    "IHEVA","IHGZT","IHLAS","IHLGM","IHYAY","IMASM","INDES","INFO",
-    "INGRM","INTEK","INTEM","INVEO","INVES","ISATR","ISBIR","ISBTR",
-    "ISDMR","ISFIN","ISGSY","ISGYO","ISKPL","ISKUR","ISSEN","ISYAT",
-    "IZENR","IZFAS","IZINV","IZMDC","JANTS","KAPLM","KAREL","KARSN",
-    "KARTN","KATMR","KAYSE","KBORU","KENT","KERVN","KFEIN","KGYO",
-    "KIMMR","KLGYO","KLKIM","KLMSN","KLNMA","KLRHO","KLSER","KLSYN",
-    "KLYPV","KMPUR","KNFRT","KOCMT","KONKA","KONYA","KOPOL","KORDS",
-    "KOTON","KRDMA","KRDMB","KRGYO","KRONT","KRPLS","KRSTL","KRTEK",
-    "KRVGD","KSTUR","KTSKR","KUTPO","KUVVA","KZBGY","KZGYO","LIDER",
-    "LIDFA","LILAK","LINK","LKMNH","LOGO","LRSHO","LUKSK","LYDHO",
-    "LYDYE","MAALT","MACKO","MAKIM","MAKTK","MANAS","MARBL","MARTI",
-    "MEDTR","MEGAP","MEGMT","MEKAG","MEPET","MERCN","MERIT","MERKO",
-    "METRO","MHRGY","MMCAS","MNDRS","MNDTR","MOBTL","MOGAN","MOPAS",
-    "MRGYO","MRSHL","MSGYO","MTRKS","MTRYO","MZHLD","NATEN","NETAS",
-    "NIBAS","NTGAZ","NTHOL","NUGYO","NUHCM","OBASE","ODINE","OFSYM",
-    "ONCSM","ONRYT","OPK30","OPX30","ORCAY","ORGE","ORMA","OSMEN",
-    "OSTIM","OTTO","OYAYO","OYLUM","OYYAT","OZATD","OZGYO","OZKGY",
-    "OZRDN","OZSUB","OZYSR","PAGYO","PAMEL","PAPIL","PARSN","PATEK",
-    "PCILT","PEKGY","PENGD","PENTA","PETUN","PINSU","PKART","PKENT",
-    "PLTUR","PNLSN","PNSUT","POLHO","POLTK","PRDGS","PRKAB","PRKME",
-    "PRZMA","PSDTC","PSGYO","QNBFK","QNBTR","QTEMZ","QUAGR","RAYSG",
-    "RGYAS","RNPOL","RODRG","RTALB","RUBNS","RUZYE","RYGYO","RYSAS",
-    "SAFKR","SAMAT","SANEL","SANFM","SANKO","SARKY","SAYAS","SDTTR",
-    "SEGMN","SEGYO","SEKFK","SEKUR","SELEC","SELVA","SERNT","SEYKM",
-    "SILVR","SKTAS","SKYLP","SKYMD","SMART","SMRVA","SNGYO","SNICA",
-    "GATEG","SNPAM","SODSN","SOKE","SONME","SRVGY","SUMAS","SUNTK",
-    "SURGY","SUWEN","TARKM","TATEN","TATGD","TBORG","TCKRC","TDGYO",
-    "TEHOL","TEKTU","TERA","TEZOL","TGSAS","TKNSA","TLMAN","TMPOL",
-    "TMSN","TNZTP","TRCAS","TRGYO","TRILC","TSGYO","TSPOR","TUCLK",
-    "TUKAS","TURGG","UFUK","ULAS","ULUFA","ULUSE","ULUUN","UNLU",
-    "USAK","USDTR","VAKFN","VAKKO","VANGD","VBTYZ","VERTU","VERUS",
-    "VESBE","VKFYO","VKGYO","VKING","VRGYO","VSNMD","YAPRK","YATAS",
-    "YAYLA","YBTAS","YESIL","YGGYO","YIGIT","YKSLN","YONGA","YUNSA",
-    "YYAPI","YYLGD","ZEDUR","ZRGYO"
+    "AEFES","AGHOL","AKBNK","AKSA","AKSEN","ALARK","ALFAS","ALTNY","ANSGR","ARCLK","ASELS","ASTOR","AVPGY","BALSU","BERA","BIMAS","BINHO","BRSAN","BRYAT","BSOKE","BTCIM","CANTE","CCOLA","CIMSA","CLEBI","CWENE","DOAS","DOHOL","DSTKF","EFOR","EGEEN","EKGYO","ENERY","ENJSA","ENKAI","EREGL","EUPWR","FENER","FROTO","GARAN","GENIL","GESAN","GLRMK","GRSEL","GRTHO","GSRAY","GUBRF","HALKB","HEKTS","IEYHO","TRENJ","ISCTR","ISMEN","KCAER","KCHOL","KONTR","TRMET","TRALT","KRDMD","KTLEV","KUYAS","LMKDC","MAGEN","MAVI","MGROS","MIATK","MPARK","OBAMS","ODAS","OTKAR","OYAKC","PASEU","PETKM","PGSUS","RALYH","REEDR","SAHOL","SASA","SISE","SKBNK","SMRTG","SOKM","TABGD","TAVHL","TCELL","THYAO","TKFEN","TOASO","TSKB","TTKOM","TTRAK","TUPRS","TUREX","TURSG","ULKER","VAKBN","VESTL","YEOTK","YKBNK","ZOREN","A1CAP","A1YEN","ACSEL","ADEL","ADESE","ADGYO","AFYON","AGESA","AGROT","AGYO","AHGAZ","AHSGY","AKCNS","AKENR","AKFGY","AKFIS","AKFYE","AKGRT","AKMGY","AKSGY","AKSUE","AKYHO","ALBRK","ALCAR","ALCTL","ALGYO","ALKA","ALKIM","ALKLC","ALVES","ANELE","ANGEN","ANHYT","ARASE","ARDYZ","ARENA","ARMGD","ARSAN","ARTMS","ARZUM","ASGYO","ASUZU","ATAGY","ATAKP","ATATP","ATEKS","ATLAS","ATSYH","AVGYO","AVHOL","AVOD","AVTUR","AYCES","AYDEM","AYEN","AYES","AYGAZ","AZTEK","BAGFS","BAHKM","BAKAB","BALAT","BANVT","BARMA","BASCM","BASGZ","BAYRK","BEGYO","BESLR","BEYAZ","BFREN","BIENY","BIGCH","BIGEN","BINBN","BIOEN","BIZIM","BJKAS","BLCYT","BMSCH","BMSTL","BNTAS","BOBET","BORLS","BORSK","BOSSA","BRISA","BRKO","BRKSN","BRKVY","BRLSM","BRMEN","BUCIM","BULGS","BURCE","BURVA","BVSAN","BYDNR","CASA","CATES","CELHA","CEMAS","CEMTS","CEMZY","CEOEM","CGCAM","CMBTN","CMENT","CONSE","COSMO","CRDFA","CRFSA","CUSAN","CVKMD","TRHOL","DAGI","DAPGM","DARDL","DCTTR","DENGE","DERHL","DERIM","DESA","DESPC","DEVA","DGATE","DGGYO","DGNMO","DIRIT","DITAS","DMRGD","DMSAS","DNISI","BIGTK","DOCO","DOFER","DOGUB","DOKTA","DURDO","DURKN","DYOBY","DZGYO","EBEBK","ECILC","ECZYT","EDATA","EDIP","EGEGY","EGEPO","EGGUB","EGPRO","EGSER","EKIZ","EKOS","EKSUN","ELITE","EMKEL","EMNIS","ENDAE","ENSRI","ENTRA","EPLAS","ERBOS","ERCB","ERSU","ESCAR","ESCOM","ESEN","ETILR","ETYAT","EUHOL","EUKYO","EUREN","EUYO","EYGYO","FADE","FLAP","FMIZP","FONET","FORMT","FORTE","FRIGO","FZLGY","GARFA","GEDIK","GEDZA","GENTS","GEREL","GIPTA","GLBMD","GLCVY","GLRYH","GLYHO","GMTAS","GOKNR","GOLTS","GOODY","GOZDE","GRNYO","GSDDE","GSDHO","GUNDG","GWIND","GZNMI","HATEK","HATSN","HDFGS","HEDEF","HKTM","HLGYO","HOROZ","HRKET","HTTBT","HUBVC","HUNER","HURGZ","ICBCT","ICUGS","IDGYO","IHAAS","IHEVA","IHGZT","IHLAS","IHLGM","IHYAY","IMASM","INDES","INFO","INGRM","INTEK","INTEM","INVEO","INVES","ISATR","ISBIR","ISBTR","ISDMR","ISFIN","ISGSY","ISGYO","ISKPL","ISKUR","ISSEN","ISYAT","IZENR","IZFAS","IZINV","IZMDC","JANTS","KAPLM","KAREL","KARSN","KARTN","KATMR","KAYSE","KBORU","KENT","KERVN","KFEIN","KGYO","KIMMR","KLGYO","KLKIM","KLMSN","KLNMA","KLRHO","KLSER","KLSYN","KLYPV","KMPUR","KNFRT","KOCMT","KONKA","KONYA","KOPOL","KORDS","KOTON","KRDMA","KRDMB","KRGYO","KRONT","KRPLS","KRSTL","KRTEK","KRVGD","KSTUR","KTSKR","KUTPO","KUVVA","KZBGY","KZGYO","LIDER","LIDFA","LILAK","LINK","LKMNH","LOGO","LRSHO","LUKSK","LYDHO","LYDYE","MAALT","MACKO","MAKIM","MAKTK","MANAS","MARBL","MARTI","MEDTR","MEGAP","MEGMT","MEKAG","MEPET","MERCN","MERIT","MERKO","METRO","MHRGY","MMCAS","MNDRS","MNDTR","MOBTL","MOGAN","MOPAS","MRGYO","MRSHL","MSGYO","MTRKS","MTRYO","MZHLD","NATEN","NETAS","NIBAS","NTGAZ","NTHOL","NUGYO","NUHCM","OBASE","ODINE","OFSYM","ONCSM","ONRYT","OPK30","OPX30","ORCAY","ORGE","ORMA","OSMEN","OSTIM","OTTO","OYAYO","OYLUM","OYYAT","OZATD","OZGYO","OZKGY","OZRDN","OZSUB","OZYSR","PAGYO","PAMEL","PAPIL","PARSN","PATEK","PCILT","PEKGY","PENGD","PENTA","PETUN","PINSU","PKART","PKENT","PLTUR","PNLSN","PNSUT","POLHO","POLTK","PRDGS","PRKAB","PRKME","PRZMA","PSDTC","PSGYO","QNBFK","QNBTR","QTEMZ","QUAGR","RAYSG","RGYAS","RNPOL","RODRG","RTALB","RUBNS","RUZYE","RYGYO","RYSAS","SAFKR","SAMAT","SANEL","SANFM","SANKO","SARKY","SAYAS","SDTTR","SEGMN","SEGYO","SEKFK","SEKUR","SELEC","SELVA","SERNT","SEYKM","SILVR","SKTAS","SKYLP","SKYMD","SMART","SMRVA","SNGYO","SNICA","GATEG","SNPAM","SODSN","SOKE","SONME","SRVGY","SUMAS","SUNTK","SURGY","SUWEN","TARKM","TATEN","TATGD","TBORG","TCKRC","TDGYO","TEHOL","TEKTU","TERA","TEZOL","TGSAS","TKNSA","TLMAN","TMPOL","TMSN","TNZTP","TRCAS","TRGYO","TRILC","TSGYO","TSPOR","TUCLK","TUKAS","TURGG","UFUK","ULAS","ULUFA","ULUSE","ULUUN","UNLU","USAK","USDTR","VAKFN","VAKKO","VANGD","VBTYZ","VERTU","VERUS","VESBE","VKFYO","VKGYO","VKING","VRGYO","VSNMD","YAPRK","YATAS","YAYLA","YBTAS","YESIL","YGGYO","YIGIT","YKSLN","YONGA","YUNSA","YYAPI","YYLGD","ZEDUR","ZRGYO"
 ]
 BIST_STOCK_LIST = [f"{t}.IS" for t in BIST_TICKERS]
 
@@ -457,16 +384,97 @@ def calculate_rsi_signals(series_close: pd.Series):
     return dip_signal, orta_signal
 
 # ======================================================================
+# 🧭 TRADINGVIEW TEKNİK ÖZET ÇEKİCİ (GÜNLÜK & HAFTALIK)
+# ======================================================================
+def _score_to_summary(rec_val):
+    if rec_val is None:
+        return None
+    score = max(-1.0, min(1.0, float(rec_val)))
+
+    if score >= 0.5:
+        summary = "GÜÇLÜ AL 🚀"
+    elif score > 0.1:
+        summary = "AL ✅"
+    elif score > -0.1:
+        summary = "NÖTR ⚖️"
+    elif score > -0.5:
+        summary = "SAT ❌"
+    else:
+        summary = "GÜÇLÜ SAT 🔻"
+
+    buy_count = int(round(((score + 1.0) / 2.0) * 26))
+    sell_count = int(round(((1.0 - score) / 2.0) * 26))
+    neutral_count = max(0, 26 - buy_count - sell_count)
+
+    diff = 26 - (buy_count + neutral_count + sell_count)
+    neutral_count = max(0, neutral_count + diff)
+
+    return {
+        "buy": buy_count,
+        "neutral": neutral_count,
+        "sell": sell_count,
+        "summary": summary
+    }
+
+def get_tv_technicals_both(ticker: str):
+    url = "https://scanner.tradingview.com/turkey/scan"
+    payload = {
+        "symbols": {
+            "tickers": [f"BIST:{ticker}"],
+            "query": {"types": []}
+        },
+        "columns": [
+            "Recommend.All",
+            "Recommend.All|1W"
+        ]
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        resp = req.post(url, json=payload, headers=headers, timeout=8)
+        if resp.status_code != 200:
+            return None, None
+
+        data = resp.json().get("data", [])
+        if not data or not data[0].get("d"):
+            return None, None
+
+        row = data[0]["d"]
+        d_res = _score_to_summary(row[0] if len(row) > 0 else None)
+        w_res = _score_to_summary(row[1] if len(row) > 1 else None)
+        return d_res, w_res
+    except Exception:
+        return None, None
+
+# ======================================================================
 # 🚀 PRO BÜLTEN KART FORMATLAYICI
 # ======================================================================
-def send_pro_report(strategy_title: str, ticker: str, tv_link: str, pro: dict, badge: str = ""):
+def send_pro_report(strategy_title: str, ticker: str, tv_link: str, pro: dict, badge: str = "", tv_tf: str = "D"):
     badge_line = f"<b>{badge}</b>\n\n" if badge else ""
+    tv_d, tv_w = get_tv_technicals_both(ticker)
+
+    tv_lines = ""
+    if tv_d:
+        tv_lines += (
+            f"🧭 <b>TV Günlük:</b> {tv_d['buy']} Al | {tv_d['neutral']} Nötr | {tv_d['sell']} Sat "
+            f"(<b>{tv_d['summary']}</b>)\n\n"
+        )
+    if tv_w:
+        tv_lines += (
+            f"🧭 <b>TV Haftalik:</b> {tv_w['buy']} Al | {tv_w['neutral']} Nötr | {tv_w['sell']} Sat "
+            f"(<b>{tv_w['summary']}</b>)\n\n"
+        )
+
     msg = (
         f"💎 <b>EMEKLİ PRO BÜLTEN</b> 💎\n"
         f"📌 <b>Strateji:</b> {strategy_title}\n"
         f"{badge_line}"
         f"🎯 <b>Hisse:</b> <a href='{tv_link}'><b>{ticker}</b></a>\n"
         f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n\n"
+        f"{tv_lines}"
         f"📊 <b>Osilatörler </b>\n"
         f"💹 Günlük RSI: <b>{pro['rsi_d']:.2f}</b>\n"
         f"💹 Haftalık RSI: <b>{pro['rsi_w']:.2f}</b>\n"
@@ -564,7 +572,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                                 pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                                 if pro_d:
-                                    s1_uzun_ralli.append((ticker, tv_link, pro_d, ""))
+                                    s1_uzun_ralli.append((ticker, tv_link, pro_d, "", "D"))
                                     mark_signal_sent(conn, ticker, st_name)
 
                     # 2. Base 30
@@ -576,7 +584,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                                 pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                                 if pro_d:
-                                    s2_base_30.append((ticker, tv_link, pro_d, ""))
+                                    s2_base_30.append((ticker, tv_link, pro_d, "", "D"))
                                     mark_signal_sent(conn, ticker, st_name)
 
                     # 3. Matrix Orta Hat 50
@@ -590,7 +598,7 @@ def run_targeted_screener():
                                     tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                                     pro_w = calculate_pro_metrics(df_w_res, df_w, df_d)
                                     if pro_w:
-                                        s3_matrix_wm.append((ticker, tv_link, pro_w, ""))
+                                        s3_matrix_wm.append((ticker, tv_link, pro_w, "", "W"))
                                         mark_signal_sent(conn, ticker, st_name)
 
                     # 4. Üçlü Kesişim
@@ -600,7 +608,7 @@ def run_targeted_screener():
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                             pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                             if pro_d:
-                                s4_uclu_kesisim.append((ticker, tv_link, pro_d, ""))
+                                s4_uclu_kesisim.append((ticker, tv_link, pro_d, "", "D"))
                                 mark_signal_sent(conn, ticker, st_name)
                     elif not df_w.empty and check_triple_confluence_signal(df_w):
                         st_name = "💥 4. ÜÇLÜ KESİŞİM (HAFTALIK)"
@@ -608,7 +616,7 @@ def run_targeted_screener():
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                             pro_w = calculate_pro_metrics(df_w, df_w, df_d)
                             if pro_w:
-                                s4_uclu_kesisim.append((ticker, tv_link, pro_w, ""))
+                                s4_uclu_kesisim.append((ticker, tv_link, pro_w, "", "W"))
                                 mark_signal_sent(conn, ticker, st_name)
 
                     # LEDA KONTROLLERİ (Sade ve MACD Ayrı Ayrı)
@@ -621,7 +629,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                                 pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                                 if pro_d:
-                                    s5_leda_d_sade.append((ticker, tv_link, pro_d, ""))
+                                    s5_leda_d_sade.append((ticker, tv_link, pro_d, "", "D"))
                                     mark_signal_sent(conn, ticker, st_sade)
 
                             if check_macd_cross(df_d):
@@ -630,7 +638,7 @@ def run_targeted_screener():
                                     tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                                     pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                                     if pro_d:
-                                        s6_leda_d_macd.append((ticker, tv_link, pro_d, ""))
+                                        s6_leda_d_macd.append((ticker, tv_link, pro_d, "", "D"))
                                         mark_signal_sent(conn, ticker, st_macd)
 
                     if not df_w.empty and len(df_w) >= 35:
@@ -642,7 +650,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                                 pro_w = calculate_pro_metrics(df_w, df_w, df_d)
                                 if pro_w:
-                                    s7_leda_w_sade.append((ticker, tv_link, pro_w, ""))
+                                    s7_leda_w_sade.append((ticker, tv_link, pro_w, "", "W"))
                                     mark_signal_sent(conn, ticker, st_sade_w)
 
                             if check_macd_cross(df_w):
@@ -651,7 +659,7 @@ def run_targeted_screener():
                                     tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                                     pro_w = calculate_pro_metrics(df_w, df_w, df_d)
                                     if pro_w:
-                                        s8_leda_w_macd.append((ticker, tv_link, pro_w, ""))
+                                        s8_leda_w_macd.append((ticker, tv_link, pro_w, "", "W"))
                                         mark_signal_sent(conn, ticker, st_macd_w)
 
                     # ⭐ ÇİFTE ONAY KONTROLÜ (Hem Günlük Hem Haftalık Leda Al Sinyali)
@@ -661,7 +669,7 @@ def run_targeted_screener():
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                             pro_w = calculate_pro_metrics(df_w, df_w, df_d)
                             if pro_w:
-                                send_pro_report(st_double, ticker, tv_link, pro_w, "⭐ GÜNLÜK & HAFTALIK ÇİFTE ONAY")
+                                send_pro_report(st_double, ticker, tv_link, pro_w, "⭐ GÜNLÜK & HAFTALIK ÇİFTE ONAY", "W")
                                 mark_signal_sent(conn, ticker, st_double)
 
                     # HU KONTROLLERİ (Sade ve MACD - Günlük)
@@ -671,7 +679,7 @@ def run_targeted_screener():
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                             pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                             if pro_d:
-                                s9_hu_d_sade.append((ticker, tv_link, pro_d, ""))
+                                s9_hu_d_sade.append((ticker, tv_link, pro_d, "", "D"))
                                 mark_signal_sent(conn, ticker, st_hu_sade)
 
                         if check_macd_cross(df_d):
@@ -680,7 +688,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                                 pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                                 if pro_d:
-                                    s10_hu_d_macd.append((ticker, tv_link, pro_d, ""))
+                                    s10_hu_d_macd.append((ticker, tv_link, pro_d, "", "D"))
                                     mark_signal_sent(conn, ticker, st_hu_macd)
 
                     # MAVİLİM KONTROLLERİ (Sade ve MACD - Haftalık)
@@ -690,7 +698,7 @@ def run_targeted_screener():
                             tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                             pro_w = calculate_pro_metrics(df_w, df_w, df_d)
                             if pro_w:
-                                s11_mav_w_sade.append((ticker, tv_link, pro_w, ""))
+                                s11_mav_w_sade.append((ticker, tv_link, pro_w, "", "W"))
                                 mark_signal_sent(conn, ticker, st_mav_sade)
 
                         if check_macd_cross(df_w):
@@ -699,7 +707,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=W"
                                 pro_w = calculate_pro_metrics(df_w, df_w, df_d)
                                 if pro_w:
-                                    s12_mav_w_macd.append((ticker, tv_link, pro_w, ""))
+                                    s12_mav_w_macd.append((ticker, tv_link, pro_w, "", "W"))
                                     mark_signal_sent(conn, ticker, st_mav_macd)
 
                     # 11. Hassas Dip ve Orta Bant
@@ -711,7 +719,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                                 pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                                 if pro_d:
-                                    s13_hassas_dip.append((ticker, tv_link, pro_d, ""))
+                                    s13_hassas_dip.append((ticker, tv_link, pro_d, "", "D"))
                                     mark_signal_sent(conn, ticker, st_dip)
                         if orta:
                             st_orta = "🎯 11. ORTA BANT"
@@ -719,7 +727,7 @@ def run_targeted_screener():
                                 tv_link = f"https://www.tradingview.com/chart/?symbol=BIST%3A{ticker}&interval=D"
                                 pro_d = calculate_pro_metrics(df_d, df_w, df_d)
                                 if pro_d:
-                                    s14_hassas_orta.append((ticker, tv_link, pro_d, ""))
+                                    s14_hassas_orta.append((ticker, tv_link, pro_d, "", "D"))
                                     mark_signal_sent(conn, ticker, st_orta)
 
             except Exception as e:
@@ -730,8 +738,8 @@ def run_targeted_screener():
 
         def report_strategy(title: str, items: list):
             if items:
-                for ticker, tv_link, pro, badge in items:
-                    send_pro_report(title, ticker, tv_link, pro, badge)
+                for ticker, tv_link, pro, badge, tv_tf in items:
+                    send_pro_report(title, ticker, tv_link, pro, badge, tv_tf)
 
         report_strategy("1️⃣ RALLİ BAŞLANGIÇ", s1_uzun_ralli)
         report_strategy("2️⃣ RSI-MOST 30", s2_base_30)
