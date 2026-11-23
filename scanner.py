@@ -473,13 +473,13 @@ def send_pro_report(strategy_title: str, ticker: str, tv_link: str, pro: dict, b
         f"📌 <b>Strateji:</b> {strategy_title}\n"
         f"{badge_line}"
         f"🎯 <b>Hisse:</b> <a href='{tv_link}'><b>{ticker}</b></a>\n"
-        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n\n"
+        f"💲 <b>Fiyat:</b> {pro['price']:.2f} ₺\n"
         f"{tv_lines}"
         f"📊 <b>Osilatörler </b>\n"
         f"💹 Günlük RSI: <b>{pro['rsi_d']:.2f}</b>\n"
         f"💹 Haftalık RSI: <b>{pro['rsi_w']:.2f}</b>\n"
         f"💪 ADX: <b>{pro['adx']:.2f} ({pro['adx_status']})</b>\n"
-        f"💥 <b>{pro['money_flow']}</b> (MFI: {pro['mfi']:.1f})\n\n"
+        f"💥 <b>{pro['money_flow']}</b> (MFI: {pro['mfi']:.1f})\n"
         f"<i>ℹ️ Otomatik Akıllı Sinyal Sistemi</i>"
     )
     telegram_gonder(msg)
@@ -493,7 +493,7 @@ def run_targeted_screener():
     telegram_gonder(
         f"🎯 <b>Emekli Sinyal Tarama Başlatıldı.</b>\n"
         f"📊 Mod: <b>{SELECTED_STRATEGY}</b>\n"
-        f"🤖 Bot için <b>6 Özel Strateji</b> aktif.\n"
+        f"🤖 Bot için <b>14 Özel Strateji</b> aktif.\n"
         f"🔍 Kendi kullandığınız indikatörler ile kontrol ediniz.\n"
         f"📰 Güncel piyasa verilerini ve haberleri takip etmeyi unutmayın.\n"
         f"🤖 Bot aktif ve tarama gerçekleştiriliyor...\n"
