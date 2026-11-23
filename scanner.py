@@ -229,13 +229,19 @@ def calculate_pro_metrics(df_target, df_weekly):
 # ======================================================================
 def calculate_leda_indicators(df):
     try:
-        if len(df) < 30: return None
+        if df is None or len(df) < 30:
+            return None
         df = df.copy()
         high, low, close, volume = df['High'], df['Low'], df['Close'], df['Volume']
         hl2 = (high + low) / 2
         hlc3 = (high + low + close) / 3
-        tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
-        
+
+        tr = pd.concat(
+            [high - low, abs(high - close.shift(1)), abs(low - close.shift(1))],
+            axis=1,
+        ).max(axis=1)
+
+        # --- ALPHATREND (AP=14, coeff=1.0, MFI>=50) ---
         atr_ap = tr.rolling(window=14).mean()
         mf = hlc3 * volume
         upper_mf = mf.where(hlc3 > hlc3.shift(1), 0.0)
@@ -243,41 +249,63 @@ def calculate_leda_indicators(df):
         pos_mf = upper_mf.rolling(window=14).sum()
         neg_mf = lower_mf.rolling(window=14).sum()
         df['mfi'] = 100 - (100 / (1 + (pos_mf / (neg_mf + 1e-10))))
-        
-        at = np.zeros(len(df))
+
         upT = (low - atr_ap * 1.0).values
         dnT = (high + atr_ap * 1.0).values
         mfi_vals = df['mfi'].values
-        
-        for i in range(1, len(df)):
-            if mfi_vals[i] >= 50:
-                at[i] = max(upT[i], at[i-1]) if not np.isnan(at[i-1]) else upT[i]
+
+        at = np.zeros(len(df), dtype=float)
+        for i in range(len(df)):
+            prev_at = at[i - 1] if i > 0 and not np.isnan(at[i - 1]) else 0.0
+            mfi_cond = (not np.isnan(mfi_vals[i])) and (mfi_vals[i] >= 50)
+            if mfi_cond:
+                val = upT[i] if not np.isnan(upT[i]) else prev_at
+                at[i] = max(val, prev_at)
             else:
-                at[i] = min(dnT[i], at[i-1]) if not np.isnan(at[i-1]) else dnT[i]
+                val = dnT[i] if not np.isnan(dnT[i]) else prev_at
+                at[i] = min(val, prev_at)
+
         df['AlphaTrend'] = at
 
+        # --- SUPERTREND FIXED (Factor=3.0, PD=7) ---
         atr_st = pine_rma(tr, 7)
         up_st = (hl2 - 3.0 * atr_st).values
         dn_st = (hl2 + 3.0 * atr_st).values
-        trUp = np.zeros(len(df))
-        trDn = np.zeros(len(df))
-        tsl = np.zeros(len(df))
-        trend = np.ones(len(df))
         close_vals = close.values
-        
-        for i in range(1, len(df)):
-            trUp[i] = max(up_st[i], trUp[i-1]) if close_vals[i-1] > trUp[i-1] else up_st[i]
-            trDn[i] = min(dn_st[i], trDn[i-1]) if close_vals[i-1] < trDn[i-1] else dn_st[i]
-            if close_vals[i] > trDn[i-1]: trend[i] = 1
-            elif close_vals[i] < trUp[i-1]: trend[i] = -1
-            else: trend[i] = trend[i-1]
+
+        trUp = np.zeros(len(df), dtype=float)
+        trDn = np.zeros(len(df), dtype=float)
+        tsl = np.zeros(len(df), dtype=float)
+        trend = np.ones(len(df), dtype=int)
+
+        for i in range(len(df)):
+            prev_up = trUp[i - 1] if i > 0 and not np.isnan(trUp[i - 1]) else 0.0
+            prev_dn = trDn[i - 1] if i > 0 and not np.isnan(trDn[i - 1]) else 0.0
+            prev_close = close_vals[i - 1] if i > 0 and not np.isnan(close_vals[i - 1]) else np.nan
+            prev_trend = trend[i - 1] if i > 0 else 1
+
+            cur_up = up_st[i] if not np.isnan(up_st[i]) else 0.0
+            cur_dn = dn_st[i] if not np.isnan(dn_st[i]) else 0.0
+
+            trUp[i] = max(cur_up, prev_up) if (not np.isnan(prev_close) and prev_close > prev_up) else cur_up
+            trDn[i] = min(cur_dn, prev_dn) if (not np.isnan(prev_close) and prev_close < prev_dn) else cur_dn
+
+            cur_close = close_vals[i]
+            if not np.isnan(cur_close) and cur_close > prev_dn:
+                trend[i] = 1
+            elif not np.isnan(cur_close) and cur_close < prev_up:
+                trend[i] = -1
+            else:
+                trend[i] = prev_trend
+
             tsl[i] = trUp[i] if trend[i] == 1 else trDn[i]
-            
+
         df['TSL'] = tsl
+        df['Trend'] = np.where(df['AlphaTrend'] > df['TSL'], 'AL', 'SAT')
         df['buy'] = (df['AlphaTrend'] > df['TSL']) & (df['AlphaTrend'].shift(1) <= df['TSL'].shift(1))
         df['sell'] = (df['AlphaTrend'] < df['TSL']) & (df['AlphaTrend'].shift(1) >= df['TSL'].shift(1))
         return df
-    except:
+    except Exception:
         return None
 
 def check_hu_cross_signal(df: pd.DataFrame) -> bool:
