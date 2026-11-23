@@ -748,7 +748,7 @@ def run_targeted_screener():
         report_strategy("1️⃣3️⃣ HASSAS DİP", s13_hassas_dip)
         report_strategy("1️⃣4️⃣ ORTA BANT", s14_hassas_orta)
 
-        telegram_gonder("🏁 <b>Pro Tarama ve Kontrol Tamamlandı.</b>")
+        telegram_gonder("🏁 <b>Pro Tarama Tamamlandı.</b>")
     finally:
         conn.close()
 
