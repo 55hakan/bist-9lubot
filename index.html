@@ -29,8 +29,7 @@
             width: 100%;
             height: 100vh;
             overflow: hidden;
-            background-color: var--bg-color);
-            background-color: #0d1117;
+            background-color: var(--bg-color);
             color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
@@ -41,7 +40,7 @@
             padding: 2px 4px;
         }
 
-        /* İstediğiniz Gibi 70px Yüksekliğinde Özel Canlı Bant */
+        /* 70px Yüksekliğinde Özel Canlı Bant */
         .custom-ticker-tape {
             width: 100%;
             height: 70px;
@@ -116,15 +115,15 @@
             overflow: hidden;
         }
 
-        /* Büyütülmüş ve Ortalanmış Başlık */
+        /* Başlık */
         header {
             text-align: center;
-            padding: 2px 0;
-            margin-bottom: 2px;
+            padding: 1px 0;
+            flex-shrink: 0;
         }
 
         .logo-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 900;
             color: var(--text-white);
             display: flex;
@@ -146,11 +145,11 @@
             background: #229ED9;
             color: white;
             text-decoration: none;
-            padding: 2px 10px;
+            padding: 1px 10px;
             border-radius: 12px;
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             font-weight: 700;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         /* Seans Durumu */
@@ -158,17 +157,18 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            padding: 3px 8px;
+            padding: 2px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.68rem;
+            font-size: 0.65rem;
+            flex-shrink: 0;
         }
 
         .status-tag {
             padding: 1px 5px;
             border-radius: 4px;
-            font-size: 0.58rem;
+            font-size: 0.56rem;
             font-weight: bold;
         }
 
@@ -184,10 +184,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
-        .main-action-info h2 { font-size: 0.8rem; margin: 0; }
-        .main-action-info p { font-size: 0.58rem; opacity: 0.9; margin: 0; }
+        .main-action-info h2 { font-size: 0.78rem; margin: 0; }
+        .main-action-info p { font-size: 0.56rem; opacity: 0.9; margin: 0; }
 
         .btn-large {
             background-color: #ffffff;
@@ -196,25 +197,37 @@
             border-radius: 4px;
             font-weight: bold;
             text-decoration: none;
-            font-size: 0.65rem;
+            font-size: 0.64rem;
         }
 
         .section-title {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             color: var(--text-white);
             display: flex;
             align-items: center;
             gap: 4px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 1px;
-            margin-top: 1px;
+            flex-shrink: 0;
         }
 
-        /* 6'lı Strateji Gridi */
+        /* 14'lü Strateji Gridi (Kompakt Kaydırılabilir / Tam Sığan Yapı) */
         .strategy-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 3px;
+            overflow-y: auto;
+            padding-right: 1px;
+            max-height: 46vh;
+        }
+
+        .strategy-grid::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .strategy-grid::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
         }
 
         .card {
@@ -231,21 +244,23 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 3px;
         }
 
         .strategy-number {
             background-color: var(--badge-bg);
             color: var(--accent-blue);
-            font-size: 0.5rem;
+            font-size: 0.48rem;
             font-weight: bold;
             padding: 1px 3px;
             border-radius: 2px;
             border: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         .info h3 {
             margin: 0;
-            font-size: 0.68rem;
+            font-size: 0.62rem;
             color: var(--text-white);
             white-space: nowrap;
             overflow: hidden;
@@ -254,7 +269,7 @@
 
         .info p {
             margin: 1px 0;
-            font-size: 0.54rem;
+            font-size: 0.5rem;
             color: var(--text-muted);
             white-space: nowrap;
             overflow: hidden;
@@ -265,10 +280,10 @@
             background-color: var(--accent-green);
             color: white;
             border: none;
-            padding: 3px;
+            padding: 2px;
             border-radius: 3px;
             font-weight: 600;
-            font-size: 0.6rem;
+            font-size: 0.56rem;
             text-decoration: none;
             text-align: center;
             display: block;
@@ -281,15 +296,16 @@
             border: 1px solid var(--border-color);
             border-radius: 4px;
             flex: 1;
-            min-height: 120px;
+            min-height: 110px;
             overflow: hidden;
         }
 
         footer {
             text-align: center;
-            font-size: 0.52rem;
+            font-size: 0.5rem;
             color: var(--text-muted);
             padding: 1px 0;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -343,7 +359,7 @@
     </div>
 
     <div class="main-wrapper">
-        <!-- BÜYÜTÜLMÜŞ VE ORTALANMIŞ HEADER -->
+        <!-- HEADER -->
         <header>
             <div class="logo-title">
                 <i class="fa-solid fa-chart-line"></i> EMEKLİ MASTER PRO
@@ -369,7 +385,7 @@
         <div class="main-action-card">
             <div class="main-action-info">
                 <h2>🚀 Tümünü Çalıştır</h2>
-                <p>6 stratejiyi tara, Telegram'a bülten at.</p>
+                <p>14 strateji + Çifte Onay tara, Telegram'a bülten at.</p>
             </div>
             <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn-large">
                 <i class="fa-solid fa-play"></i> Tara
@@ -378,17 +394,17 @@
 
         <!-- STRATEJİ LİSTESİ -->
         <div class="section-title">
-            <i class="fa-solid fa-layer-group" style="color: var(--accent-blue);"></i> Aktif Stratejiler (6 Adet)
+            <i class="fa-solid fa-layer-group" style="color: var(--accent-blue);"></i> Aktif Stratejiler (14 Adet + Çifte Onay)
         </div>
 
         <div class="strategy-grid">
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <h3>💎 1. Rallİ</h3>
+                        <h3>1️⃣ Ralli Başlangıç</h3>
                         <span class="strategy-number">STR 1</span>
                     </div>
-                    <p>RSI-MOST Matrix</p>
+                    <p>RSI-MOST Matrix 50 Üstü</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
             </div>
@@ -396,10 +412,10 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <h3>💥 2. Üçlü</h3>
+                        <h3>2️⃣ RSI-MOST 30</h3>
                         <span class="strategy-number">STR 2</span>
                     </div>
-                    <p>Leda + Mavilim + WMA</p>
+                    <p>Base 30 Yukarı Kesişim</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
             </div>
@@ -407,10 +423,10 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <h3>📈 3. Günlük</h3>
+                        <h3>3️⃣ RSI-MOST 50</h3>
                         <span class="strategy-number">STR 3</span>
                     </div>
-                    <p>Leda + MACD Günlük</p>
+                    <p>Haftalık Orta Hat 50</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
             </div>
@@ -418,10 +434,10 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <h3>📈 4. Haftalık</h3>
+                        <h3>4️⃣ Üçlü Kesişim</h3>
                         <span class="strategy-number">STR 4</span>
                     </div>
-                    <p>Leda + MACD Haftalık</p>
+                    <p>Leda + Mavilim + WMA79</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
             </div>
@@ -429,10 +445,10 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <h3>💎 5. HU Gün</h3>
+                        <h3>5️⃣ Leda Günlük</h3>
                         <span class="strategy-number">STR 5</span>
                     </div>
-                    <p>Hull/WMA Kesişim</p>
+                    <p>Sade AlphaTrend Al (D)</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
             </div>
@@ -440,10 +456,98 @@
             <div class="card">
                 <div class="info">
                     <div class="info-header">
-                        <h3>🌊 6. Mavilim</h3>
+                        <h3>6️⃣ Leda Gün + MACD</h3>
                         <span class="strategy-number">STR 6</span>
                     </div>
-                    <p>Mavilim WMA + MACD</p>
+                    <p>Leda + MACD Onaylı (D)</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>7️⃣ Leda Haftalık</h3>
+                        <span class="strategy-number">STR 7</span>
+                    </div>
+                    <p>Sade AlphaTrend Al (W)</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>8️⃣ Leda Haf + MACD</h3>
+                        <span class="strategy-number">STR 8</span>
+                    </div>
+                    <p>Leda + MACD Onaylı (W)</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>9️⃣ HU Günlük</h3>
+                        <span class="strategy-number">STR 9</span>
+                    </div>
+                    <p>Sade Hull/WMA Kesişim</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>🔟 HU Gün + MACD</h3>
+                        <span class="strategy-number">STR 10</span>
+                    </div>
+                    <p>HU + MACD Onaylı (D)</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>1️⃣1️⃣ Mavilim Haf.</h3>
+                        <span class="strategy-number">STR 11</span>
+                    </div>
+                    <p>Sade MavilimW Kesişim (W)</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>1️⃣2️⃣ Mavilim + MACD</h3>
+                        <span class="strategy-number">STR 12</span>
+                    </div>
+                    <p>Mavilim + MACD Onaylı (W)</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>1️⃣3️⃣ Hassas Dip</h3>
+                        <span class="strategy-number">STR 13</span>
+                    </div>
+                    <p>RSI-MOST Dip Bölgesi</p>
+                </div>
+                <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
+            </div>
+
+            <div class="card">
+                <div class="info">
+                    <div class="info-header">
+                        <h3>1️⃣4️⃣ Orta Bant</h3>
+                        <span class="strategy-number">STR 14</span>
+                    </div>
+                    <p>RSI-MOST 40-45 Bölgesi</p>
                 </div>
                 <a href="https://github.com/55hakan/bist-9lubot/actions/workflows/run.yml" target="_blank" class="btn">Çalıştır</a>
             </div>
@@ -501,11 +605,8 @@
         setInterval(updateMarketClock, 1000);
         updateMarketClock();
 
-        // Üst bant fiyatlarını TradingView public API üzerinden canlı çekme
         async function fetchMarketPrices() {
             try {
-                // Örnek simüle edilmiş veya public endpoint verileriyle güncel fiyat akışı
-                // Not: CORS engeline takılmamak için TradingView widget altyapısı alternatifi
                 document.getElementById('val-xu100').innerText = "10.450,20";
                 document.getElementById('val-xu100-2').innerText = "10.450,20";
                 
