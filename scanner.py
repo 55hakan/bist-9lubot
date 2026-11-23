@@ -459,13 +459,13 @@ def send_pro_report(strategy_title: str, ticker: str, tv_link: str, pro: dict, b
     tv_lines = ""
     if tv_d:
         tv_lines += (
-            f"🧭 <b>TV Günlük:</b> {tv_d['buy']} Al | {tv_d['neutral']} Nötr | {tv_d['sell']} Sat "
-            f"(<b>{tv_d['summary']}</b>)\n\n"
+            f"🧭 <b>TVG:</b> {tv_d['buy']} Al | {tv_d['neutral']} Nötr | {tv_d['sell']} Sat "
+            f"(<b>{tv_d['summary']}</b>)\n"
         )
     if tv_w:
         tv_lines += (
-            f"🧭 <b>TV Haftalik:</b> {tv_w['buy']} Al | {tv_w['neutral']} Nötr | {tv_w['sell']} Sat "
-            f"(<b>{tv_w['summary']}</b>)\n\n"
+            f"🧭 <b>TVH:</b> {tv_w['buy']} Al | {tv_w['neutral']} Nötr | {tv_w['sell']} Sat "
+            f"(<b>{tv_w['summary']}</b>)\n"
         )
 
     msg = (
