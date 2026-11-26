@@ -9,18 +9,15 @@ on:
         default: 'Hepsi'
   repository_dispatch:
     types: [run-scan]
-  schedule:
-    # Türkiye saatiyle 10:20 - 18:20 arası her saat 20 geçe (UTC: 07:20 - 15:20)
-    - cron: '20 7,8,9,10,11,12,13,14,15 * * 1-5'
 
 jobs:
   run-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Python Kurulumu
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
